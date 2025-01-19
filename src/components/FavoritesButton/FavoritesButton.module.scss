@@ -1,0 +1,25 @@
+@import '/src/assets/styles/mixins';
+@import '/src/assets/styles/variables';
+
+.btn {
+  display: flex;
+  padding: 12px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: $color-white;
+  box-shadow: 1px 1px 20px 0 rgba(0, 0, 0, 0.2);
+
+  cursor: pointer;
+}
+
+.icon {
+  align-self: center;
+  justify-self: center;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+
+}

@@ -4,8 +4,7 @@ import Button from '../../components/Button/Button.tsx';
 import { Link } from 'react-router-dom';
 import Title from '../../components/Title/Title.tsx';
 import cn from 'classnames';
-import * as axios from 'axios';
-import { RegisterResponse } from '../../interfaces/auth.interface.ts';
+
 
 export interface IRegisterData {
   username: string;
@@ -17,7 +16,7 @@ export interface IRegisterData {
 
 
 const Register = () => {
-  const handleSubmit = async (formData: unknown) => {
+  const handleSubmit = async () => {
     // const { data } = await axios.post<RegisterResponse>('https://150.241.113.6/api/register', {
     //   username: formData.username;
     //   email: string;

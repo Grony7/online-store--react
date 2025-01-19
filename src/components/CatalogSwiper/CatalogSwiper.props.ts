@@ -1,3 +1,3 @@
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes} from 'react';
 
-export type CatalogSwiperProps = HTMLAttributes<HTMLDivElement>;
+export interface CatalogSwiperProps extends HTMLAttributes<HTMLDivElement> {}
