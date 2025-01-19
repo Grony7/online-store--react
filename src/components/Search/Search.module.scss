@@ -1,0 +1,40 @@
+@import '/src/assets/styles/variables';
+
+.search {
+  padding: 14px 16px 14px 48px;
+  border: 1px solid #efefef;
+  border-radius: 10px;
+
+  color: $color-text;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 19px;
+  background-color: #dedede;
+
+  &::placeholder {
+    color: $color-text-secondary;
+  }
+
+  &:focus-visible,
+  &:active {
+    border-color: $color-primary-light;
+
+    & + .icon {
+      fill: $color-primary;
+    }
+  }
+}
+
+.wrapper {
+  position: relative;
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  transform: translateY(-50%);
+  fill: #767F9D;
+}
+
+

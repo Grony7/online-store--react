@@ -1,0 +1,21 @@
+@import '/src/assets/styles/variables';
+@import '/src/assets/styles/mixins';
+
+.wrapper {
+  width: 100%;
+  height: 100vh;
+
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+
+  @include vp-tablet {
+    grid-template-rows: auto 1fr;
+  }
+}
+
+
+.outley {
+  @include wrapper;
+}
+
+

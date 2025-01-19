@@ -1,0 +1,46 @@
+@import '/src/assets/styles/variables';
+@import '/src/assets/styles/mixins';
+
+.wrapper {
+  width: 100%;
+  padding: 16px 20px;
+
+  flex-wrap: wrap;
+  gap: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  @include vp-tablet {
+    width: auto;
+    padding: 0
+  }
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+}
+
+.name {
+  color: $color-text-secondary;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 16px;
+  margin: 8px 0 0;
+}
+
+//.link.active svg {
+//  color: $color-primary;
+//}
+//
+//.link.active .name {
+//  color: $color-primary;
+//}
+
+.wrapper {
+  display: flex;
+}

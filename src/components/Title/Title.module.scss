@@ -1,0 +1,15 @@
+@import '/src/assets/styles/variables';
+@import '/src/assets/styles/mixins';
+
+.title {
+  color: $color-text;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 23px;
+
+  @include vp-desktop {
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 38px;
+  }
+}

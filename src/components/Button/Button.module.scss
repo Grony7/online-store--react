@@ -1,0 +1,28 @@
+@import '/src/assets/styles/variables';
+
+.button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.25s;
+  border: none;
+  color: $color-white;
+  border-radius: 8px;
+
+  background: $color-primary;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  padding: 14px 20px;
+
+  &:hover {
+    background: $color-primary-hover;
+  }
+
+  &:disabled {
+    background: $color-primary-light;
+    color: $color-text-secondary;
+    cursor: default;
+  }
+}
+
+

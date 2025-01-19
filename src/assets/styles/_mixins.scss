@@ -1,0 +1,19 @@
+@import "variables";
+
+@mixin wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+
+@mixin vp-tablet {
+  @media (min-width: $vp-tablet) {
+    @content;
+  }
+}
+
+@mixin vp-desktop {
+  @media (min-width: $vp-desktop) {
+    @content;
+  }
+}

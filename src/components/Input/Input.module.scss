@@ -1,0 +1,18 @@
+@import '/src/assets/styles/variables';
+
+.input {
+  padding: 20px;
+  border: 1px solid #E9E9E9;
+  border-radius: 10px;
+  box-shadow: 15px 20px 45px 0 rgba(233, 233, 233, 0.25);
+
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 23px;
+
+  color: $color-text;
+
+  &::placeholder {
+    color: #C4C4C4;
+  }
+}
