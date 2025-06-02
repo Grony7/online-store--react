@@ -1,0 +1,85 @@
+.page {
+  padding: 24px;
+  max-width: 500px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.title {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.payBtn,
+.checkBtn,
+.cancelBtn {
+  flex: 1;
+  padding: 12px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payBtn {
+  background: #ffcc00;
+  color: #000;
+  &:hover {
+    background: #e6b800;
+  }
+}
+
+.checkBtn {
+  background: #e0e0e0;
+  color: #333;
+  &:hover {
+    background: #d0d0d0;
+  }
+}
+
+.cancelBtn {
+  background: #f8f8f8;
+  color: #666;
+  border: 1px solid #ddd;
+  &:hover {
+    background: #efefef;
+  }
+}
+
+.statusBlock {
+  background: #f7f7f7;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.success {
+  color: green;
+  font-weight: bold;
+}
+
+.error {
+  color: #e74c3c;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .buttons {
+    flex-direction: column;
+  }
+  
+  .payBtn, .checkBtn, .cancelBtn {
+    width: 100%;
+  }
+}

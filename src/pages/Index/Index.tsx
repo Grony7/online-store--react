@@ -1,9 +1,10 @@
-import CatalogSwiper from '../../components/CatalogSwiper/CatalogSwiper.tsx';
+import CategoriesSwiper from '../../components/CategoriesSwiper/CategoriesSwiper.tsx';
+
 
 const Index = () => {
   return (
     <>
-      <CatalogSwiper />
+      <CategoriesSwiper />
     </>
   );
 };

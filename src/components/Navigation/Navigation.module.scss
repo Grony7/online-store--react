@@ -23,6 +23,7 @@
   align-items: center;
   background-color: transparent;
   border: none;
+  cursor: pointer;
 }
 
 .name {
@@ -33,14 +34,62 @@
   margin: 8px 0 0;
 }
 
-//.link.active svg {
-//  color: $color-primary;
-//}
-//
-//.link.active .name {
-//  color: $color-primary;
-//}
+.active svg {
+  color: $color-primary;
+}
 
-.wrapper {
-  display: flex;
+.active .name {
+  color: $color-primary;
+}
+
+.profileContainer {
+  position: relative;
+}
+
+.profileButton {
+  padding: 0;
+  margin: 0;
+  
+  &:hover {
+    .name {
+      color: $color-primary;
+    }
+  }
+}
+
+.profileMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 100;
+}
+
+.menuItem {
+  display: block;
+  padding: 10px 16px;
+  color: $color-text-secondary;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.logoutButton {
+  color: $color-error;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+  padding-top: 12px;
 }

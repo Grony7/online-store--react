@@ -1,7 +1,7 @@
 export interface LoginResponse {
-  accessToken: string;
+  jwt: string;
 }
 
 export interface RegisterResponse {
-  accessToken: string;
+  jwt: string;
 }

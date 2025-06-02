@@ -1,0 +1,225 @@
+// Переменные
+$primary-color: #091D9E;
+$text-color: #454545;
+$light-gray: #E8E8E8;
+$white: #FFFFFF;
+$green: #169B00;
+$border-radius: 8px;
+
+// Панель фильтров
+.filterPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: $white;
+  border: 1px solid $light-gray;
+  border-radius: $border-radius;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+// Заголовок панели фильтров
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.filterTitle {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+  color: #000;
+}
+
+// Группа фильтров
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $light-gray;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.filterGroupTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+}
+
+// Опции фильтра
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// Стили для чекбоксов и радио-кнопок
+.checkbox, .radio {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkboxCustom, .radioCustom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid $light-gray;
+  border-radius: 4px;
+  background-color: $white;
+  cursor: pointer;
+}
+
+.checkboxCustom {
+  border-radius: 4px;
+}
+
+.radioCustom {
+  border-radius: 50%;
+
+  .radioInner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: $primary-color;
+  }
+}
+
+.optionLabel {
+  font-size: 14px;
+  color: $text-color;
+  cursor: pointer;
+}
+
+// Стили для слайдера
+.slider {
+  margin: 12px 0;
+  
+  :global {
+    .rc-slider-rail {
+      background-color: $light-gray;
+      height: 4px;
+    }
+
+    .rc-slider-track {
+      background-color: $primary-color;
+      height: 4px;
+    }
+
+    .rc-slider-handle {
+      border-color: $primary-color;
+      background-color: $white;
+      width: 16px;
+      height: 16px;
+      margin-top: -6px;
+
+      &:hover, &:active {
+        border-color: $primary-color;
+      }
+
+      &:active {
+        box-shadow: 0 0 5px rgba(9, 29, 158, 0.2);
+      }
+    }
+  }
+}
+
+// Инпуты для цены
+.priceInputs {
+  display: flex;
+  gap: 8px;
+}
+
+.priceInputWrapper {
+  flex: 1;
+  position: relative;
+  background-color: #BCC5FF;
+  border-radius: $border-radius;
+}
+
+.priceInputField {
+  width: 100%;
+  height: 36px;
+  padding: 8px 24px 8px 8px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: $text-color;
+  text-align: right;
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($primary-color, 0.5);
+  }
+  
+  // Скрываем стрелки для number input в разных браузерах
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  &[type=number] {
+    -moz-appearance: textfield;
+  }
+}
+
+.priceSymbol {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: $text-color;
+  pointer-events: none;
+}
+
+// Кнопки действий
+.filterActions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.showMoreButton, .showAllButton {
+  background: none;
+  border: none;
+  color: $primary-color;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.applyButton {
+  width: 100%;
+  padding: 12px;
+  background: $primary-color;
+  color: $white;
+  border: none;
+  border-radius: $border-radius;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: darken($primary-color, 5%);
+  }
+}
