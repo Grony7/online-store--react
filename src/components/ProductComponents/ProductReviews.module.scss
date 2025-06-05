@@ -1,0 +1,171 @@
+// Стили для главного компонента отзывов
+.reviews {
+  // Основной контейнер отзывов
+}
+
+.reviewsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+.reviewsTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #0C0C0C;
+}
+
+.createReviewButton {
+  background: #091D9E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: #0A1A8A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 29, 158, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.reviewsLoading,
+.reviewsError {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.reviewsError {
+  color: #EF4444;
+}
+
+.reviewsContainer {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+
+  // Мобильная версия - вертикальная компоновка
+  @media (max-width: 992px) {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+.reviewsList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  // На мобильных экранах показываем списки после статистики
+  @media (max-width: 992px) {
+    order: 2;
+  }
+}
+
+.noReviews {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+
+  p {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+
+    &:last-of-type {
+      margin-bottom: 24px;
+    }
+  }
+}
+
+.firstReviewButton {
+  background: #091D9E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #0A1A8A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 29, 158, 0.3);
+  }
+}
+
+// Стили для кнопки "Загрузить еще"
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.loadMoreButton {
+  background: #F8F9FA;
+  color: #0C0C0C;
+  border: 2px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: #091D9E;
+    color: white;
+    border-color: #091D9E;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 29, 158, 0.15);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.loadMoreSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #091D9E;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

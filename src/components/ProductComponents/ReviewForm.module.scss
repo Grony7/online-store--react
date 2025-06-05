@@ -1,0 +1,323 @@
+// Стили для формы отзывов
+.reviewForm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.formOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.formContainer {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.formHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #F0F0F0;
+  margin-bottom: 24px;
+}
+
+.formTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #0C0C0C;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #666;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #F8F9FA;
+    color: #0C0C0C;
+  }
+}
+
+.form {
+  padding: 0 24px 24px 24px;
+}
+
+.formGroup {
+  margin-bottom: 24px;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  color: #0C0C0C;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.ratingInput {
+  display: flex;
+  gap: 4px;
+}
+
+.starButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &.active svg {
+    fill: #EBBA1A;
+    stroke: none;
+  }
+}
+
+.textarea {
+  width: 100%;
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #091D9E;
+  }
+
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.characterCount {
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.mediaUpload {
+  margin-bottom: 16px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8F9FA;
+  border: 2px dashed #C4C4C4;
+  border-radius: 8px;
+  padding: 16px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #091D9E;
+    color: #091D9E;
+    background: rgba(9, 29, 158, 0.05);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+.mediaPreview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mediaItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F8F9FA;
+}
+
+.previewImage,
+.previewVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removeFileButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+  }
+
+  svg {
+    color: white;
+  }
+}
+
+.error {
+  background: #FEE2E2;
+  color: #DC2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+}
+
+.cancelButton {
+  background: #F8F9FA;
+  color: #666;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #E5E7EB;
+    color: #374151;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.submitButton {
+  background: #091D9E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+
+  &:hover:not(:disabled) {
+    background: #0A1A8A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 29, 158, 0.3);
+  }
+
+  &:disabled {
+    background: #CCC;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Адаптивность
+@media (max-width: 768px) {
+  .reviewForm {
+    padding: 10px;
+  }
+
+  .formContainer {
+    max-height: 95vh;
+  }
+
+  .formHeader {
+    padding: 16px 16px 0 16px;
+  }
+
+  .form {
+    padding: 0 16px 16px 16px;
+  }
+
+  .formActions {
+    flex-direction: column;
+    
+    .cancelButton,
+    .submitButton {
+      width: 100%;
+    }
+  }
+} 

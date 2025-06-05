@@ -52,8 +52,10 @@ const Navigation = ({ className, device = 'desktop', ...props }: NavigationProps
     }
   }, [jwt, profile, dispatch]);
   
-  // Закрытие меню при клике вне его
+  // Закрытие меню при клике вне его (только для десктопа)
   useEffect(() => {
+    if (device === 'mobile') return;
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
@@ -64,12 +66,22 @@ const Navigation = ({ className, device = 'desktop', ...props }: NavigationProps
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [device]);
   
   const handleLogout = () => {
     dispatch(userActions.logout());
     setIsMenuOpen(false);
     navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    if (device === 'mobile') {
+      // На мобильных устройствах сразу переходим в профиль
+      navigate('/profile');
+    } else {
+      // На десктопе показываем/скрываем меню
+      setIsMenuOpen(!isMenuOpen);
+    }
   };
 
   return (
@@ -87,49 +99,63 @@ const Navigation = ({ className, device = 'desktop', ...props }: NavigationProps
       }
 
       {jwt ? (
-        <div className={styles.profileContainer} ref={menuRef}>
-          <button 
-            className={cn(styles.link, styles.profileButton, {
-              [styles.active]: isMenuOpen
+        device === 'mobile' ? (
+          // На мобильных устройствах - простая ссылка в профиль
+          <NavLink 
+            to='/profile' 
+            className={({ isActive }) => cn(styles.link, {
+              [styles.active]: isActive
             })}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <ProfileIcon />
-            <span className={styles.name}>{profile?.name || 'Профиль'}</span>
-          </button>
-          
-          {isMenuOpen && (
-            <div className={styles.profileMenu}>
-              <NavLink 
-                to='/profile' 
-                className={styles.menuItem}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Мой профиль
-              </NavLink>
-              <NavLink 
-                to='/orders' 
-                className={styles.menuItem}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Мои заказы
-              </NavLink>
-              <NavLink 
-                to='/favorites' 
-                className={styles.menuItem}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Избранное
-              </NavLink>
-              <button 
-                className={cn(styles.menuItem, styles.logoutButton)}
-                onClick={handleLogout}
-              >
-                Выйти
-              </button>
-            </div>
-          )}
-        </div>
+            <span className={styles.name}>Профиль</span>
+          </NavLink>
+        ) : (
+          // На десктопе - кнопка с выпадающим меню
+          <div className={styles.profileContainer} ref={menuRef}>
+            <button 
+              className={cn(styles.link, styles.profileButton, {
+                [styles.active]: isMenuOpen
+              })}
+              onClick={handleProfileClick}
+            >
+              <ProfileIcon />
+              <span className={styles.name}>{profile?.name || 'Профиль'}</span>
+            </button>
+            
+            {isMenuOpen && (
+              <div className={styles.profileMenu}>
+                <NavLink 
+                  to='/profile' 
+                  className={styles.menuItem}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Мой профиль
+                </NavLink>
+                <NavLink 
+                  to='/orders' 
+                  className={styles.menuItem}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Мои заказы
+                </NavLink>
+                <NavLink 
+                  to='/favorites' 
+                  className={styles.menuItem}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Избранное
+                </NavLink>
+                <button 
+                  className={cn(styles.menuItem, styles.logoutButton)}
+                  onClick={handleLogout}
+                >
+                  Выйти
+                </button>
+              </div>
+            )}
+          </div>
+        )
       ) : (
         <NavLink to='/auth/login' className={({ isActive }) => cn(styles.link, {
           [styles.active]: isActive

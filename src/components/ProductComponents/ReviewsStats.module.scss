@@ -1,0 +1,112 @@
+// Стили для статистики отзывов
+.reviewsStatsSidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid #F0F0F0;
+  border-radius: 12px;
+  padding: 24px;
+  position: sticky;
+  top: 20px;
+
+  // На мобильных экранах показываем статистику первой
+  @media (max-width: 992px) {
+    order: 1;
+    width: 100%;
+    position: static;
+  }
+}
+
+.statsHeader {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.overallRating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.ratingNumber {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0C0C0C;
+}
+
+.ratingMax {
+  font-size: 24px;
+  color: #666;
+  font-weight: 500;
+}
+
+.statsDescription {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.ratingDistribution {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ratingLabel {
+  font-size: 12px;
+  color: #666;
+  min-width: 60px;
+  text-align: left;
+}
+
+.ratingBar {
+  flex: 1;
+  height: 8px;
+  background: #F0F0F0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ratingFill {
+  height: 100%;
+  background: #EBBA1A;
+  transition: width 0.3s ease;
+}
+
+.ratingCount {
+  font-size: 12px;
+  color: #666;
+  min-width: 20px;
+  text-align: right;
+}
+
+.statsFooter {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  line-height: 1.4;
+  border-top: 1px solid #F0F0F0;
+  padding-top: 16px;
+} 

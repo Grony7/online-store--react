@@ -66,6 +66,25 @@ $transition: all 0.3s ease-in-out;
         background: darken($primary-color, 10%);
       }
     }
+
+    .links {
+      text-align: center;
+      margin-top: 1rem;
+
+      a {
+        color: $primary-color;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      .forgotPasswordLink {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+      }
+    }
   }
 }
 

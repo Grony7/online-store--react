@@ -17,11 +17,22 @@ const Catalog = ({ ...props }: CatalogProps) => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, string[] | number[]>>({});
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Состояние для пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const pageSize = 6;
 
   // Извлечение фильтров из URL при загрузке страницы
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const filtersFromUrl: Record<string, string[] | number[]> = {};
+
+    // Получаем номер страницы из URL
+    const pageFromUrl = queryParams.get('page');
+    const page = pageFromUrl ? parseInt(pageFromUrl) : 1;
+    setCurrentPage(page);
 
     // Получаем параметры цены
     const priceMin = queryParams.get('priceMin');
@@ -33,7 +44,7 @@ const Catalog = ({ ...props }: CatalogProps) => {
     // Получаем другие параметры фильтрации
     // Используем getAll для получения всех значений параметра с одинаковым ключом
     Array.from(new Set(queryParams.keys())).forEach(key => {
-      if (key !== 'priceMin' && key !== 'priceMax') {
+      if (key !== 'priceMin' && key !== 'priceMax' && key !== 'page') {
         // Сохраняем все значения параметра как есть, без разделения
         const values = queryParams.getAll(key);
         
@@ -54,17 +65,20 @@ const Catalog = ({ ...props }: CatalogProps) => {
     if (Object.keys(filtersFromUrl).length > 0) {
       console.log('Filters from URL:', filtersFromUrl);
       setActiveFilters(filtersFromUrl);
-      getProducts(filtersFromUrl);
+      getProducts(filtersFromUrl, page);
     } else {
-      getProducts();
+      getProducts({}, page);
     }
   }, [slug, location.search]);
 
-  const getProducts = async (filters?: Record<string, string[] | number[]>) => {
+  const getProducts = async (filters?: Record<string, string[] | number[]>, page: number = 1) => {
     setIsLoading(true);
     try {
       // Формируем параметры запроса из фильтров
-      const params: Record<string, string | string[]> = {};
+      const params: Record<string, string | string[]> = {
+        page: page.toString(),
+        pageSize: pageSize.toString()
+      };
       
       if (filters) {
         console.log('Filters for API request:', filters);
@@ -92,6 +106,9 @@ const Catalog = ({ ...props }: CatalogProps) => {
       
       setCategory(data.data.category.name);
       setProducts(data.data.products);
+      setTotalPages(data.meta.pagination.pageCount);
+      setTotalProducts(data.meta.pagination.total);
+      setCurrentPage(data.meta.pagination.page);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -102,9 +119,13 @@ const Catalog = ({ ...props }: CatalogProps) => {
   const handleFilterApply = (selectedFilters: Record<string, string[] | number[]>) => {
     console.log('Applied filters:', selectedFilters);
     setActiveFilters(selectedFilters);
+    setCurrentPage(1); // Сбрасываем на первую страницу при применении фильтров
     
     // Обновляем URL с новыми параметрами фильтрации
     const queryParams = new URLSearchParams();
+    
+    // Добавляем номер страницы (всегда 1 при новых фильтрах)
+    queryParams.set('page', '1');
     
     // Добавляем параметры цены
     if (selectedFilters.priceRange && Array.isArray(selectedFilters.priceRange) && selectedFilters.priceRange.length === 2) {
@@ -134,8 +155,26 @@ const Catalog = ({ ...props }: CatalogProps) => {
     navigate(newUrl, { replace: true });
     
     // Запрашиваем продукты с новыми фильтрами
-    getProducts(selectedFilters);
+    getProducts(selectedFilters, 1);
     setIsFilterVisible(false);
+  };
+
+  // Функция для смены страницы
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    
+    // Обновляем URL с новым номером страницы
+    const queryParams = new URLSearchParams(location.search);
+    queryParams.set('page', page.toString());
+    
+    const newUrl = `${location.pathname}?${queryParams.toString()}`;
+    navigate(newUrl, { replace: true });
+    
+    // Запрашиваем продукты для новой страницы
+    getProducts(activeFilters, page);
+    
+    // Прокручиваем страницу вверх
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Переключение видимости фильтра
@@ -200,6 +239,60 @@ const Catalog = ({ ...props }: CatalogProps) => {
               <div className={styles.empty}>Товары не найдены</div>
             )}
           </div>
+
+          {/* Пагинация */}
+          {!isLoading && totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button 
+                className={`${styles.paginationButton} ${currentPage === 1 ? styles.disabled : ''}`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <svg width="8" height="16" viewBox="0 0 8 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 1L1 8L7 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                const isCurrentPage = page === currentPage;
+                const shouldShow = Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages;
+                
+                if (!shouldShow) {
+                  if (page === currentPage - 3 || page === currentPage + 3) {
+                    return <span key={page} className={styles.paginationDots}>...</span>;
+                  }
+                  return null;
+                }
+                
+                return (
+                  <button
+                    key={page}
+                    className={`${styles.paginationButton} ${isCurrentPage ? styles.active : ''}`}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              
+              <button 
+                className={`${styles.paginationButton} ${currentPage === totalPages ? styles.disabled : ''}`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <svg width="8" height="16" viewBox="0 0 8 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L7 8L1 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Информация о результатах */}
+          {!isLoading && totalProducts > 0 && (
+            <div className={styles.resultsInfo}>
+              Показано {Math.min((currentPage - 1) * pageSize + 1, totalProducts)} - {Math.min(currentPage * pageSize, totalProducts)} из {totalProducts} товаров
+            </div>
+          )}
         </div>
       </div>
 

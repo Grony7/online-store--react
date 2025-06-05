@@ -1,0 +1,25 @@
+// Стили для описания товара
+.description {
+  margin-bottom: 40px;
+}
+
+.descriptionTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  color: #0C0C0C;
+}
+
+.descriptionContent {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+
+  p {
+    margin: 0 0 16px 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+} 

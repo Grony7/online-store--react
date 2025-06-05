@@ -5,6 +5,7 @@ export interface IProduct {
     price: number;
     sale_price: number;
     discount_percent: number;
+    colorId: number;
     image: string;
     inStock: boolean;
     specifications?: {

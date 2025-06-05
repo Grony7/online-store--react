@@ -163,6 +163,9 @@ export const Login = () => {
         <div className={styles.links}>
           <div>Нет аккаунта?</div>
           <Link to="/auth/register">Зарегистрироваться</Link>
+          <div className={styles.forgotPasswordLink}>
+            <Link to="/auth/forgot-password">Забыли пароль?</Link>
+          </div>
         </div>
       </form>
       

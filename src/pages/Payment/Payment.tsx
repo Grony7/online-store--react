@@ -7,7 +7,21 @@ import styles from './Payment.module.scss';
 
 interface PaymentStatusResponse {
   payment_status: string;
-  order_status:   string;
+  order_status: string;
+}
+
+interface PaymentUrlResponse {
+  confirmation_url: string;
+  payment_id: string;
+}
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -18,52 +32,90 @@ const PaymentPage: React.FC = () => {
   const jwt = useSelector((s: RootState) => s.user.jwt);
   const [status, setStatus] = useState<PaymentStatusResponse | null>(null);
   const [error, setError] = useState<string>('');
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Проверяем, что id не undefined и не "undefined"
+  // Получаем ссылку на оплату при загрузке страницы
   useEffect(() => {
-    console.log('ID заказа:', id);
+    console.log('ID заказа в Payment компоненте:', id);
+    console.log('URL страницы:', window.location.href);
+    
     if (!id || id === 'undefined') {
+      console.log('ID не определен, перенаправление на /checkout');
       navigate('/checkout');
+      return;
     }
-  }, [id, navigate]);
+
+    // Устанавливаем маркер доступа для случая перезагрузки страницы
+    sessionStorage.setItem('payment_access', 'true');
+
+    // Получаем ссылку на оплату
+    const fetchPaymentUrl = async () => {
+      try {
+        setIsLoading(true);
+        console.log('Запрашиваем ссылку на оплату для заказа ID:', id);
+        
+        const response = await axios.get<PaymentUrlResponse>(
+          `${API_URL}/api/orders/${id}/payment`,
+          {
+            headers: { Authorization: `Bearer ${jwt}` }
+          }
+        );
+        
+        console.log('Получен ответ:', response.data);
+        
+        if (response.data && response.data.confirmation_url) {
+          setPaymentUrl(response.data.confirmation_url);
+        } else {
+          setError('Не удалось получить ссылку на оплату');
+        }
+      } catch (e) {
+        console.error('Ошибка при получении ссылки на оплату:', e);
+        setError('Не удалось получить ссылку на оплату');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPaymentUrl();
+  }, [id, jwt, navigate]);
 
   const handlePay = () => {
-    // Проверяем, что id не undefined перед переходом
-    if (!id || id === 'undefined') {
-      setError('ID заказа не определен');
+    if (!paymentUrl) {
+      setError('Ссылка на оплату не найдена');
       return;
     }
     
-    // сразу переводим пользователя на YooMoney
-    window.location.href =
-      `https://yoomoney.ru/checkout/payments/v2/contract?orderId=${id}`;
+    // Перенаправляем на платежную систему
+    window.location.href = paymentUrl;
   };
 
-  const handleCheckStatus = async () => {
-    // Проверяем, что id не undefined перед запросом
-    if (!id || id === 'undefined') {
-      setError('ID заказа не определен');
-      return;
-    }
+  // const handleCheckStatus = async () => {
+  //   // Проверяем, что id не undefined перед запросом
+  //   if (!id || id === 'undefined') {
+  //     setError('ID заказа не определен');
+  //     return;
+  //   }
     
-    try {
-      const resp = await axios.get<PaymentStatusResponse>(
-        `${API_URL}/api/orders/payment/id/${id}`,
-        {
-          headers: { Authorization: `Bearer ${jwt}` },
-        }
-      );
-      setStatus(resp.data);
-      setError('');
-    } catch (e: any) {
-      console.error(e);
-      setError(
-        e.response?.data?.message ||
-        e.message ||
-        'Не удалось получить статус'
-      );
-    }
-  };
+  //   try {
+  //     const resp = await axios.get<PaymentStatusResponse>(
+  //       `${API_URL}/api/orders/payment/id/${id}`,
+  //       {
+  //         headers: { Authorization: `Bearer ${jwt}` }
+  //       }
+  //     );
+  //     setStatus(resp.data);
+  //     setError('');
+  //   } catch (e) {
+  //     console.error(e);
+  //     const err = e as AxiosErrorResponse;
+  //     setError(
+  //       err.response?.data?.message ||
+  //       err.message ||
+  //       'Не удалось получить статус'
+  //     );
+  //   }
+  // };
 
   const handleCancel = () => {
     // Возвращаемся на страницу оформления заказа
@@ -76,46 +128,52 @@ const PaymentPage: React.FC = () => {
         Оплата заказа {id && id !== 'undefined' ? `#${id}` : ''}
       </h1>
 
-      <div className={styles.buttons}>
-        <button
-          className={styles.payBtn}
-          onClick={handlePay}
-          disabled={!id || id === 'undefined'}
-        >
-          Оплатить
-        </button>
-        <button
-          className={styles.checkBtn}
-          onClick={handleCheckStatus}
-          disabled={!id || id === 'undefined'}
-        >
-          Проверить статус
-        </button>
-        <button
-          className={styles.cancelBtn}
-          onClick={handleCancel}
-        >
-          Вернуться к оформлению
-        </button>
-      </div>
+      {isLoading ? (
+        <div className={styles.loading}>Загрузка информации об оплате...</div>
+      ) : (
+        <>
+          <div className={styles.buttons}>
+            <button
+              className={styles.payBtn}
+              onClick={handlePay}
+              disabled={!paymentUrl || !id || id === 'undefined'}
+            >
+              Оплатить
+            </button>
+            {/* <button
+              className={styles.checkBtn}
+              onClick={handleCheckStatus}
+              disabled={!id || id === 'undefined'}
+            >
+              Проверить статус
+            </button>
+            <button
+              className={styles.cancelBtn}
+              onClick={handleCancel}
+            >
+              Вернуться к оформлению
+            </button> */}
+          </div>
 
-      {status && (
-        <div className={styles.statusBlock}>
-          <p>
-            <strong>Статус оплаты:</strong>{' '}
-            {status.payment_status}
-          </p>
-          <p>
-            <strong>Статус заказа:</strong>{' '}
-            {status.order_status}
-          </p>
-          {status.payment_status === 'succeeded' &&
-            status.order_status === 'paid' && (
-              <p className={styles.success}>
-                🎉 Заказ успешно оплачен!
+          {status && (
+            <div className={styles.statusBlock}>
+              <p>
+                <strong>Статус оплаты:</strong>{' '}
+                {status.payment_status}
               </p>
-            )}
-        </div>
+              <p>
+                <strong>Статус заказа:</strong>{' '}
+                {status.order_status}
+              </p>
+              {status.payment_status === 'succeeded' &&
+                status.order_status === 'paid' && (
+                <p className={styles.success}>
+                  🎉 Заказ успешно оплачен!
+                </p>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {error && (

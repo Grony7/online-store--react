@@ -1,0 +1,173 @@
+@import '/src/assets/styles/variables';
+@import '/src/assets/styles/mixins';
+
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.promotionHeader {
+  margin-bottom: 24px;
+}
+
+.title {
+  margin-bottom: 12px;
+}
+
+.period {
+  color: $text-light;
+  font-size: 14px;
+}
+
+.imageContainer {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 400px;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.contentImageContainer {
+  margin: 24px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.contentImage {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: $color-text;
+  
+  p {
+    margin-bottom: 16px;
+  }
+  
+  ul, ol {
+    margin-bottom: 16px;
+    padding-left: 20px;
+  }
+  
+  h2, h3, h4 {
+    margin: 24px 0 16px;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    border-radius: 4px;
+  }
+}
+
+.formattedContent {
+  font-size: 16px;
+  line-height: 1.7;
+  color: $color-text;
+  max-width: 100%;
+}
+
+.sectionHeading {
+  font-size: 24px;
+  font-weight: 600;
+  color: $color-primary;
+  margin: 32px 0 20px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(135deg, $color-primary, $color-text-secondary);
+    border-radius: 2px;
+  }
+}
+
+.introText {
+  font-size: 18px;
+  line-height: 1.8;
+  color: $color-text;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba($color-primary, 0.05), rgba($color-text-secondary, 0.05));
+  border-radius: 12px;
+  border-left: 4px solid $color-primary;
+  font-style: italic;
+}
+
+.paragraph {
+  margin-bottom: 18px;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.listItem {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba($color-white, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba($color-primary, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: rgba($color-primary, 0.2);
+    box-shadow: 0 4px 12px rgba($color-primary, 0.1);
+  }
+}
+
+.listTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: $color-primary;
+  margin-bottom: 12px;
+  position: relative;
+  
+  &::before {
+    content: '✦';
+    color: $color-text-secondary;
+    margin-right: 8px;
+    font-size: 18px;
+  }
+}
+
+.listDescription {
+  font-size: 16px;
+  line-height: 1.6;
+  color: $color-text;
+  margin: 0;
+  text-align: justify;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 16px;
+  color: $text-light;
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 16px;
+  color: $color-error;
+} 

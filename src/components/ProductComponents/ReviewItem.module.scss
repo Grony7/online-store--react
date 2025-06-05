@@ -1,0 +1,190 @@
+// Стили для отдельного отзыва
+.review {
+  background: white;
+  border: 1px solid #F0F0F0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.reviewUser {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewUserAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reviewUserAvatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #091D9E;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.reviewUserInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reviewUserName {
+  font-weight: 600;
+  color: #0C0C0C;
+  font-size: 14px;
+}
+
+.reviewDate {
+  font-size: 12px;
+  color: #666;
+}
+
+.reviewHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewRating {
+  display: flex;
+  gap: 2px;
+}
+
+.reviewActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editButton,
+.deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+
+  &:hover {
+    background: #F8F9FA;
+    transform: scale(1.1);
+  }
+}
+
+.editButton:hover {
+  color: #091D9E;
+}
+
+.deleteButton:hover {
+  color: #EF4444;
+}
+
+.reviewVariant {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.variantItem {
+  background: #F8F9FA;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.variantLabel {
+  font-weight: 500;
+  color: #333;
+}
+
+.reviewComment {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 12px;
+
+  &.truncated {
+    // Стили для сокращенного текста
+  }
+}
+
+.readMoreButton {
+  background: none;
+  border: none;
+  color: #091D9E;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  margin-bottom: 12px;
+
+  &:hover {
+    color: #0A1A8A;
+  }
+}
+
+.reviewMedia {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reviewMediaItem {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.reviewVideoItem {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid white;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+  }
+}
+
+.reviewImage,
+.reviewVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+} 

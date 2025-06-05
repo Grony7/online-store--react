@@ -1,0 +1,46 @@
+@import '/src/assets/styles/mixins';
+@import '/src/assets/styles/variables';
+
+.wrapper {
+  @include wrapper;
+  padding: 20px 16px;
+  
+  display: block;
+  
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin-bottom: 16px;
+}
+
+.swiper {
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.swiperSlide {
+  width: 240px;
+  
+  @include vp-tablet {
+    width: 280px;
+  }
+  
+  @include vp-desktop {
+    width: 300px;
+  }
+}
+
+.loading, .error {
+  padding: 20px;
+  text-align: center;
+  color: $color-text-secondary;
+}
+
+.error {
+  color: $color-error;
+} 

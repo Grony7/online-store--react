@@ -29,9 +29,9 @@ export interface VariantColor {
     name: string;
     hex: string;
   };
-  image: ProductImage | null;
-  images: ProductImage[];
-  videos: ProductVideo[];
+  image: string | null;
+  images: string[];
+  videos: string[];
   price: number;
   sale_price: number | null;
   on_sale: boolean;

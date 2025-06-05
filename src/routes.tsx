@@ -4,14 +4,21 @@ import Main from './pages/Index/Index.tsx';
 import Cart from './pages/Cart/Cart.tsx';
 import Login from './pages/Login/Login.tsx';
 import Register from './pages/Register/Register.tsx';
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword.tsx';
+import ResetPassword from './pages/ResetPassword/ResetPassword.tsx';
 import ErrorPage from './pages/ErrorPage/ErrorPage.tsx';
 import Catalog from './pages/Catalog/Catalog.tsx';
+import IndexCatalog from './pages/IndexCatalog/IndexCatalog.tsx';
 import ProductDetail from './pages/ProductDetail/ProductDetail.tsx';
 import RequireAuth from './helpers/RequireAuth.tsx';
 import RequirePaymentAccess from './helpers/RequirePaymentAccess.tsx';
 import Checkout from './pages/Checkout/Checkout.tsx';
 import PaymentPage from './pages/Payment/Payment.tsx';
 import Favorites from './pages/Favorites/Favorites.tsx';
+import Orders from './pages/Orders/Orders.tsx';
+import Profile from './pages/Profile/Profile.tsx';
+import Promotions from './pages/Promotions/Promotions.tsx';
+import PromotionDetail from './pages/PromotionDetail/PromotionDetail.tsx';
 
 
 export const router = createBrowserRouter([
@@ -31,12 +38,24 @@ export const router = createBrowserRouter([
         element: <Favorites />
       },
       {
+        path: '/catalog',
+        element: <IndexCatalog />
+      },
+      {
         path: '/catalog/:slug',
         element: <Catalog />
       },
       {
         path: '/products/:id',
         element: <ProductDetail />
+      },
+      {
+        path: '/promotions',
+        element: <Promotions />
+      },
+      {
+        path: '/promotions/:slug',
+        element: <PromotionDetail />
       },
       {
         path: '*',
@@ -56,6 +75,14 @@ export const router = createBrowserRouter([
           {
             path: 'payment/:id',
             element: <RequirePaymentAccess><PaymentPage /></RequirePaymentAccess>
+          },
+          {
+            path: 'orders',
+            element: <Orders />
+          },
+          {
+            path: 'profile',
+            element: <Profile />
           }
         ]
       },
@@ -69,6 +96,14 @@ export const router = createBrowserRouter([
           {
             path: 'register',
             element: <Register />
+          },
+          {
+            path: 'forgot-password',
+            element: <ForgotPassword />
+          },
+          {
+            path: 'reset-password',
+            element: <ResetPassword />
           }
         ]
       }

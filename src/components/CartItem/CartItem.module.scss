@@ -151,6 +151,15 @@
   text-decoration: line-through;
 }
 
+.discount {
+  font-size: 14px;
+  font-weight: 500;
+  color: #F44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .actions {
   display: flex;
   flex-direction: column;
@@ -264,6 +273,76 @@
   left: 0;
   width: 16px;
   height: 16px;
+}
+
+.stockInfo {
+  font-size: 12px;
+  color: #4CAF50;
+  margin-top: 4px;
+}
+
+// Состояние загрузки
+.loading {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .loadingContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .loadingSpinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid $color-primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+// Состояние ошибки
+.error {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: #f44336;
+  background-color: #fef5f5;
+  
+  .errorContent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #f44336;
+    font-size: 14px;
+  }
+  
+  .removeErrorButton {
+    padding: 6px 12px;
+    border: 1px solid #f44336;
+    background: white;
+    color: #f44336;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #f44336;
+      color: white;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

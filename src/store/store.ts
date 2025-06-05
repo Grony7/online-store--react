@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userSlice, { JWT_PERSISTENT_STATE } from './user.slice.ts';
 import { saveState } from './storage.ts';
-import cartSlice, { CART_PERSISTENT_STATE } from './cart.slice.ts';
-import favoritesSlice, { FAVORITES_PERSISTENT_STATE } from './favorites.slice.ts';
+import cartSlice from './cart.slice.ts';
+import favoritesSlice from './favorites.slice.ts';
 
 export const store = configureStore({
   reducer: {
@@ -14,8 +14,7 @@ export const store = configureStore({
 
 store.subscribe(() => {
   saveState({ jwt: store.getState().user.jwt }, JWT_PERSISTENT_STATE);
-  saveState( store.getState().cart, CART_PERSISTENT_STATE);
-  saveState( store.getState().favorites, FAVORITES_PERSISTENT_STATE);
+  // Корзина и избранные сохраняются вручную в соответствующих slice для контроля над тем что сохраняется
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -6,44 +6,47 @@ import cn from 'classnames';
 import noImage from '../../assets/no-image.svg';
 import { useDispatch } from 'react-redux';
 import { cartActions } from '../../store/cart.slice';
+import { AppDispatch } from '../../store/store';
 import FavoritesButton from '../FavoritesButton/FavoritesButton';
 import { favoritesActions } from '../../store/favorites.slice';
 
 export const ProductCard = ({ className, product, isFavoritePage = false, ...props }: ProductCardProps) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
     
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Предотвращаем переход по ссылке, если кнопка внутри ссылки
     e.stopPropagation();
     if (!product.inStock) return;
         
     setIsAddingToCart(true);
         
-    // Создаем объект товара для добавления в корзину
-    // Поскольку на карточке нет выбора цвета, берем первый вариант по умолчанию (id=1)
-    const cartItem = {
-      id: product.id,
-      colorId: product.variantColorIds?.[0] || 0, // Используем дефолтный ID цвета
-      count: 1,
-      name: product.title,
-      price: product.price || 0,
-      sale_price: product?.sale_price,
-      image: product.image || '',
-      color: {
-        name: 'Стандартный', // Значение по умолчанию
-        hex: '#000000' // Значение по умолчанию
-      }
-    };
-        
-    // Добавляем товар в корзину
-    dispatch(cartActions.add(cartItem));
-        
-    // Имитация загрузки для лучшего UX
-    setTimeout(() => {
-      setIsAddingToCart(false);
-    }, 500);
+    try {
+      // Используем colorId из продукта или 1 по умолчанию
+      const colorId = product.variantColorIds?.[0] || 1;
+      console.log('Добавление товара в корзину:', {
+        productId: product.id,
+        colorId: colorId,
+        hasColorId: !!product.colorId
+      });
+      
+      // Добавляем товар в корзину с базовой информацией
+      // Детальная информация загрузится автоматически на странице корзины
+      dispatch(cartActions.add({
+        id: product.id,
+        colorId: colorId,
+        count: 1
+      }));
+      
+    } catch (error) {
+      console.error('Ошибка добавления товара в корзину:', error);
+    } finally {
+      // Имитация загрузки для лучшего UX
+      setTimeout(() => {
+        setIsAddingToCart(false);
+      }, 500);
+    }
   };
 
   const handleRemoveFromFavorites = (e: React.MouseEvent) => {

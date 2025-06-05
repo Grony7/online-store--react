@@ -44,6 +44,20 @@
   }
 }
 
+.warning {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #856404;
+  }
+}
+
 .loading {
   text-align: center;
   margin-top: 80px;

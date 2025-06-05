@@ -1,35 +1,25 @@
 import { ReactNode, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
 const RequirePaymentAccess = ({ children }: { children: ReactNode }) => {
   const jwt = useSelector((state: RootState) => state.user.jwt);
+  const { id } = useParams<{ id: string }>();
   const hasAccess = sessionStorage.getItem('payment_access') === 'true';
 
-  // Очищаем маркер доступа после проверки, чтобы предотвратить 
-  // доступ при обновлении страницы
-  useEffect(() => {
-    if (hasAccess) {
-      // Задержка очистки для предотвращения проблем с навигацией
-      const timer = setTimeout(() => {
-        sessionStorage.removeItem('payment_access');
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasAccess]);
-
-  // Проверяем авторизацию и доступ к странице
+  // Проверяем авторизацию
   if (!jwt) {
     return <Navigate to="/auth/login" replace />;
   }
 
-  if (!hasAccess) {
-    return <Navigate to="/checkout" replace />;
+  // Если у нас есть доступ или существует ID в URL, разрешаем доступ
+  if (hasAccess || id) {
+    return children;
   }
 
-  return children;
+  // В противном случае перенаправляем на checkout
+  return <Navigate to="/checkout" replace />;
 };
 
 export default RequirePaymentAccess; 

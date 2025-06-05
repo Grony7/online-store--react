@@ -86,7 +86,8 @@
 }
 
 .pickupSection,
-.contactsSection {
+.contactsSection,
+.orderSection {
   background: #fff;
   border-radius: 8px;
   padding: 16px;
@@ -98,6 +99,19 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.orderError {
+  width: 100%;
+  color: #e74c3c;
+  background-color: #fadbd8;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 14px;
 }
 
 .total {
@@ -159,4 +173,68 @@
 
 .addressItem:hover {
   background: #f0f0f0;
+}
+
+// Стили для списка товаров в заказе
+.orderItems {
+  margin-top: 12px;
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.orderItemInfo {
+  flex: 1;
+}
+
+.orderItemTitle {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.orderItemColor {
+  font-size: 12px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.orderItemQuantity {
+  font-size: 12px;
+  color: #666;
+}
+
+.orderItemPrice {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.emptyOrder {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+}
+
+.loading, .error {
+  padding: 20px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.loading {
+  color: #3498db;
+}
+
+.error {
+  color: #e74c3c;
 }

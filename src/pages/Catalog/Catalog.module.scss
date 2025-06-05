@@ -231,3 +231,70 @@ $border-radius: 8px;
     }
   }
 }
+
+// Пагинация
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.paginationButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border: 1px solid #E0E0E0;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover:not(.disabled) {
+    border-color: #091D9E;
+    background: rgba(9, 29, 158, 0.05);
+    color: #091D9E;
+  }
+
+  &.active {
+    border-color: #091D9E;
+    background: #091D9E;
+    color: white;
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.paginationDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  color: #999;
+  font-weight: 500;
+}
+
+.resultsInfo {
+  display: flex;
+  justify-content: center;
+  color: #666;
+  font-size: 14px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}

@@ -1,0 +1,193 @@
+// Стили для информации о товаре
+.info {
+  flex: 1;
+  margin-left: 32px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0C0C0C;
+  margin: 0 0 16px 0;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.reviewCount {
+  font-size: 14px;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: #091D9E;
+  }
+}
+
+.statusBlock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.status {
+  font-weight: 600;
+  font-size: 14px;
+
+  &.inStock {
+    color: #22C55E;
+  }
+
+  &.outOfStock {
+    color: #EF4444;
+  }
+}
+
+.articleNumber {
+  font-size: 14px;
+  color: #666;
+}
+
+.priceBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.currentPrice {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0C0C0C;
+}
+
+.oldPrice {
+  font-size: 20px;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.discount {
+  background: #EF4444;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.colors {
+  margin-bottom: 32px;
+}
+
+.colorsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #0C0C0C;
+}
+
+.colorOptions {
+  display: flex;
+  gap: 12px;
+}
+
+.colorOption {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #E0E0E0;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #091D9E;
+    transform: scale(1.05);
+  }
+
+  &.active {
+    border-color: #091D9E;
+    box-shadow: 0 0 0 2px rgba(9, 29, 158, 0.2);
+  }
+}
+
+.colorInner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+}
+
+.addToCartButton {
+  flex: 1;
+  background: #091D9E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+
+  &:hover:not(:disabled) {
+    background: #0A1A8A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 29, 158, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background: #CCC;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.loading {
+    .loader {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.favoriteButton {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+} 

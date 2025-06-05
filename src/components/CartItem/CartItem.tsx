@@ -10,6 +10,37 @@ import PlusVerticalIcon from '../../assets/icons/plus-vertical-icon.svg?react';
 import PlusHorizontalIcon from '../../assets/icons/plus-horizontal-icon.svg?react';
 
 const CartItem = ({ className, item, onRemove, onIncrement, onDecrement, onToggleSelect, ...props }: CartItemProps) => {
+  // Показываем лоадер если данные загружаются
+  if (item.isLoading || !item.details) {
+    return (
+      <div className={cn(styles.cartItem, styles.loading, className)} {...props}>
+        <div className={styles.loadingContent}>
+          <div className={styles.loadingSpinner}></div>
+          <span>Загрузка товара...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Показываем ошибку если не удалось загрузить данные
+  if (item.isError) {
+    return (
+      <div className={cn(styles.cartItem, styles.error, className)} {...props}>
+        <div className={styles.errorContent}>
+          <span>Ошибка загрузки товара</span>
+          <button 
+            className={styles.removeErrorButton}
+            onClick={() => onRemove(item.id, item.colorId)}
+          >
+            Удалить
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { details } = item;
+
   return (
     <div className={cn(styles.cartItem, className, {
       [styles.selected]: item.selected
@@ -30,46 +61,53 @@ const CartItem = ({ className, item, onRemove, onIncrement, onDecrement, onToggl
 
       <div className={styles.content}>
         <div className={styles.imageWrapper}>
-          {item.mediaType === 'video' ? (
-            <video 
-              src={`${import.meta.env.VITE_API_URL}${item.image}`}
-              className={styles.video}
-              muted
-              loop
-              autoPlay
-            />
-          ) : (
-            <img 
-              src={item.image ? `${import.meta.env.VITE_API_URL}${item.image}` : noImage}
-              alt={item.name}
-              className={styles.image}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = noImage;
-              }}
-            />
-          )}
+          <img 
+            src={details.image ? `${import.meta.env.VITE_API_URL}${details.image}` : noImage}
+            alt={details.title}
+            className={styles.image}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = noImage;
+            }}
+          />
         </div>
         
         <div className={styles.info}>
           <div className={styles.nameWrapper}>
-            <h3 className={styles.name}>{item.name}</h3>
-            {item.color && (
+            <h3 className={styles.name}>{details.title}</h3>
+            {details.color && (
               <div className={styles.colorIndicator}>
-                <div className={styles.colorBox} style={{ backgroundColor: item.color.hex }}></div>
-                <span className={styles.colorName}>{item.color.name}</span>
+                <div className={styles.colorBox} style={{ backgroundColor: details.color.hex_code }}></div>
+                <span className={styles.colorName}>{details.color.name}</span>
               </div>
             )}
           </div>
           
           <div className={styles.priceBlock}>
-            <span className={styles.currentPrice}>
-              {item.sale_price ? item.sale_price : item.price} ₽
-            </span>
-            {item.sale_price && item.sale_price < item.price && (
-              <span className={styles.oldPrice}>{item.price} ₽</span>
+            {details.on_sale && details.sale_price ? (
+              <>
+                <span className={styles.currentPrice}>
+                  {details.sale_price} ₽
+                </span>
+                <span className={styles.oldPrice}>
+                  {details.price} ₽
+                </span>
+                <span className={styles.discount}>
+                  -{Math.round(((details.price - details.sale_price) / details.price) * 100)}%
+                </span>
+              </>
+            ) : (
+              <span className={styles.currentPrice}>
+                {details.price} ₽
+              </span>
             )}
           </div>
+          
+          {details.quantity > 0 && (
+            <div className={styles.stockInfo}>
+              В наличии: {details.quantity} шт.
+            </div>
+          )}
         </div>
       </div>
       
@@ -108,7 +146,10 @@ const CartItem = ({ className, item, onRemove, onIncrement, onDecrement, onToggl
           <span className={styles.count}>{item.count}</span>
           
           <button 
-            className={styles.counterButton}
+            className={cn(styles.counterButton, {
+              [styles.disabled]: item.count >= details.quantity
+            })}
+            disabled={item.count >= details.quantity}
             onClick={() => onIncrement(item.id, item.colorId)}
             aria-label="Увеличить количество"
           >

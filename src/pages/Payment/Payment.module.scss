@@ -74,6 +74,13 @@
   text-align: center;
 }
 
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
 @media (max-width: 600px) {
   .buttons {
     flex-direction: column;

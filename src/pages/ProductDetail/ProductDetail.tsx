@@ -1,4 +1,4 @@
-import { FC, useEffect, useState, useRef, useCallback } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import cn from 'classnames';
@@ -6,11 +6,20 @@ import styles from './ProductDetail.module.scss';
 import { ProductDetailProps } from './ProductDetail.props';
 import { IProductDetail, IProductDetailResponse, VariantColor } from '../../interfaces/product-detail.interface';
 import { IReviewsResponse, IReview } from '../../interfaces/reviews.interface';
-import noImage from '../../assets/no-image.svg';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { cartActions } from '../../store/cart.slice';
-import FavoritesButton from '../../components/FavoritesButton/FavoritesButton';
 import { IProduct } from '../../interfaces/products.interface';
+import {
+  ProductGallery,
+  ProductInfo,
+  ProductSpecifications,
+  ProductDescription,
+  ProductReviews,
+  ReviewForm
+} from '../../components/ProductComponents';
+import { ReviewFormData } from '../../components/ProductComponents/ReviewForm';
+import { RootState } from '../../store/store';
+
 // Импортируем компоненты лайтбокса
 import Lightbox from 'yet-another-react-lightbox';
 import Video from 'yet-another-react-lightbox/plugins/video';
@@ -93,6 +102,14 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  // Получаем токен авторизации из Redux store
+  const jwt = useSelector((state: RootState) => state.user.jwt);
+  const userProfile = useSelector((state: RootState) => state.user.profile);
+  
+  // Получаем ID текущего пользователя
+  const currentUserId = userProfile?.id || null;
+
   const [product, setProduct] = useState<IProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +124,19 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [reviewsStats, setReviewsStats] = useState<{ averageRating: number; reviewCount: number; ratingDistribution?: Record<number, number> } | null>(null);
   
+  // Состояние для пагинации отзывов
+  const [reviewsPage, setReviewsPage] = useState<number>(1);
+  const [hasMoreReviews, setHasMoreReviews] = useState<boolean>(false);
+  const [loadingMoreReviews, setLoadingMoreReviews] = useState<boolean>(false);
+  const reviewsPerPage = 10;
+  
   // Состояние для сворачивания текста отзывов
   const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
+  
+  // Состояние для формы отзыва
+  const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
+  const [editingReview, setEditingReview] = useState<IReview | null>(null);
+  const [isReviewFormEditing, setIsReviewFormEditing] = useState<boolean>(false);
   
   // Состояние для лайтбокса
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
@@ -118,333 +146,445 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   const [reviewLightboxOpen, setReviewLightboxOpen] = useState<boolean>(false);
   const [reviewLightboxIndex, setReviewLightboxIndex] = useState<number>(0);
   const [reviewLightboxItems, setReviewLightboxItems] = useState<Slide[]>([]);
-  
-  // Ref для контейнера миниатюр
-  const thumbnailsRef = useRef<HTMLDivElement>(null);
-
-  // Состояние для хранения превью видео
-  const [videoThumbnails, setVideoThumbnails] = useState<Map<string, string>>(new Map());
-  
-  // Функция для создания превью из видео
-  const generateVideoThumbnail = useCallback(async (videoUrl: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.src = videoUrl;
-      video.crossOrigin = 'anonymous';
-      video.currentTime = 1; // Взять кадр с 1 секунды
-      video.muted = true;
-      
-      video.onloadeddata = () => {
-        // Когда видео загрузилось, берем кадр
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(thumbnail);
-        } else {
-          // Если не удалось создать контекст, возвращаем пустую строку
-          resolve('');
-        }
-      };
-      
-      video.onerror = () => {
-        // Если произошла ошибка, возвращаем пустую строку
-        resolve('');
-      };
-      
-      // Форсируем загрузку видео
-      video.load();
-    });
-  }, []);
-
-  // Загружаем превью для видео при инициализации компонента
-  useEffect(() => {
-    if (product?.videos && product.videos.length > 0) {
-      const loadThumbnails = async () => {
-        const thumbnailsMap = new Map<string, string>();
-        
-        for (const video of product.videos) {
-          const videoUrl = `${import.meta.env.VITE_API_URL}${video.url}`;
-          const thumbnail = await generateVideoThumbnail(videoUrl);
-          if (thumbnail) {
-            thumbnailsMap.set(video.url, thumbnail);
-          }
-        }
-        
-        setVideoThumbnails(thumbnailsMap);
-      };
-      
-      loadThumbnails();
-    }
-  }, [product?.videos, generateVideoThumbnail]);
-
-  // Функция для определения типа URL (видео или изображение)
-  const isVideoUrl = (url: string): boolean => {
-    const videoExtensions = ['.mp4', '.webm', '.ogg'];
-    return videoExtensions.some(ext => url.toLowerCase().endsWith(ext));
-  };
 
   // Подготавливаем данные для лайтбокса
   const getLightboxItems = (): Slide[] => {
     if (!product) return [];
     
+    // Основные изображения товара
     const imageItems: SlideImage[] = product.images.map(image => ({
       src: `${import.meta.env.VITE_API_URL}${image.url}`,
       type: 'image' as const
     }));
     
+    // Основные видео товара
     const videoItems: SlideVideo[] = product.videos.map(video => ({
-      sources: [
-        {
-          src: `${import.meta.env.VITE_API_URL}${video.url}`,
-          type: 'video/mp4'
-        }
-      ],
+      sources: [{ src: `${import.meta.env.VITE_API_URL}${video.url}`, type: 'video/mp4' }],
       type: 'video' as const,
-      // Используем созданный нами thumbnail из самого видео
-      poster: videoThumbnails.get(video.url) || 
-        (video.thumbnail ? `${import.meta.env.VITE_API_URL}${video.thumbnail}` : '')
+      poster: video.thumbnail 
+        ? `${import.meta.env.VITE_API_URL}${video.thumbnail}` 
+        : product.images.length > 0 
+          ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` 
+          : ''
     }));
     
-    return [...imageItems, ...videoItems];
+    // Изображения из вариантов цветов
+    const variantImageItems: SlideImage[] = [];
+    const variantVideoItems: SlideVideo[] = [];
+    
+    if (product.variantColors && selectedColor) {
+      const selectedVariantColor = product.variantColors.find(variant => variant.id === selectedColor);
+      
+      if (selectedVariantColor) {
+        // Добавляем основное изображение варианта
+        if (selectedVariantColor.image) {
+          variantImageItems.push({
+            src: `${import.meta.env.VITE_API_URL}${selectedVariantColor.image}`,
+            type: 'image' as const
+          });
+        }
+        
+        // Добавляем дополнительные изображения варианта
+        if (selectedVariantColor.images) {
+          selectedVariantColor.images.forEach(imageUrl => {
+            if (imageUrl) {
+              variantImageItems.push({
+                src: `${import.meta.env.VITE_API_URL}${imageUrl}`,
+                type: 'image' as const
+              });
+            }
+          });
+        }
+        
+        // Добавляем видео варианта
+        if (selectedVariantColor.videos) {
+          selectedVariantColor.videos.forEach(videoUrl => {
+            if (videoUrl) {
+              variantVideoItems.push({
+                sources: [{ src: `${import.meta.env.VITE_API_URL}${videoUrl}`, type: 'video/mp4' }],
+                type: 'video' as const,
+                poster: selectedVariantColor.image 
+                  ? `${import.meta.env.VITE_API_URL}${selectedVariantColor.image}`
+                  : product.images.length > 0 
+                    ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` 
+                    : ''
+              });
+            }
+          });
+        }
+      }
+    }
+    
+    return [...imageItems, ...variantImageItems, ...videoItems, ...variantVideoItems];
   };
 
-  // Открываем лайтбокс и устанавливаем индекс
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
     setLightboxOpen(true);
   };
 
-  // Функция для открытия лайтбокса отзывов
   const openReviewLightbox = (reviewMedia: IReview[], selectedReviewId: number, selectedMediaIndex: number) => {
-    // Собираем все медиа из всех отзывов
-    const allReviewMedia: Slide[] = [];
-    let targetIndex = 0;
-    let currentIndex = 0;
-    
-    reviewMedia.forEach((review) => {
-      review.media.forEach((media, mediaIndex) => {
-        if (review.id === selectedReviewId && mediaIndex === selectedMediaIndex) {
-          targetIndex = currentIndex;
-        }
-        
-        if (media.type === 'image') {
-          allReviewMedia.push({
-            src: `${import.meta.env.VITE_API_URL}${media.url}`,
-            type: 'image' as const
-          });
-        } else if (media.type === 'video') {
-          allReviewMedia.push({
-            sources: [{
-              src: `${import.meta.env.VITE_API_URL}${media.url}`,
-              type: 'video/mp4'
-            }],
-            type: 'video' as const,
-            poster: media.thumbnail ? `${import.meta.env.VITE_API_URL}${media.thumbnail}` : ''
-          });
-        }
-        
-        currentIndex++;
-      });
+    const selectedReview = reviewMedia.find(r => r.id === selectedReviewId);
+    if (!selectedReview?.media) return;
+
+    const lightboxItems: Slide[] = selectedReview.media.map(media => {
+      if (media.type === 'image') {
+        return {
+          src: `${import.meta.env.VITE_API_URL}${media.url}`,
+          type: 'image' as const
+        };
+      } else {
+        return {
+          sources: [{ src: `${import.meta.env.VITE_API_URL}${media.url}`, type: 'video/mp4' }],
+          type: 'video' as const,
+          poster: media.thumbnail ? `${import.meta.env.VITE_API_URL}${media.thumbnail}` : ''
+        };
+      }
     });
-    
-    setReviewLightboxItems(allReviewMedia);
-    setReviewLightboxIndex(targetIndex);
+
+    setReviewLightboxItems(lightboxItems);
+    setReviewLightboxIndex(selectedMediaIndex);
     setReviewLightboxOpen(true);
   };
 
-  // Функция для генерации статистики из отзывов, если она не пришла с сервера
   const generateStatsFromReviews = (reviews: IReview[]) => {
-    if (reviews.length === 0) return null;
-    
+    if (reviews.length === 0) {
+      return {
+        averageRating: 0,
+        reviewCount: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      };
+    }
+
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = totalRating / reviews.length;
     
-    const ratingDistribution = {
-      1: reviews.filter(r => r.rating === 1).length,
-      2: reviews.filter(r => r.rating === 2).length,
-      3: reviews.filter(r => r.rating === 3).length,
-      4: reviews.filter(r => r.rating === 4).length,
-      5: reviews.filter(r => r.rating === 5).length
-    };
-    
+    const ratingDistribution = reviews.reduce((acc, review) => {
+      acc[review.rating] = (acc[review.rating] || 0) + 1;
+      return acc;
+    }, {} as Record<number, number>);
+
     return {
       averageRating,
       reviewCount: reviews.length,
-      ratingDistribution
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, ...ratingDistribution }
     };
   };
 
-  // Функция загрузки отзывов
-  const fetchReviews = async (productId: string) => {
-    setReviewsLoading(true);
-    setReviewsError(null);
+  const fetchReviews = async (productId: string, page: number = 1, append: boolean = false) => {
     try {
-      const { data } = await axios.get<IReviewsResponse>(`${import.meta.env.VITE_API_URL}/api/products/${productId}/reviews`);
-      console.log('Reviews data:', data);
-      setReviews(data.reviews);
-      // Если статистика пришла с сервера, используем её, иначе генерируем из отзывов
-      if (data.stats) {
-        console.log('Using server stats:', data.stats);
-        setReviewsStats(data.stats);
+      if (!append) {
+        setReviewsLoading(true);
+        setReviewsError(null);
       } else {
-        console.log('Generating stats from reviews');
-        const generatedStats = generateStatsFromReviews(data.reviews);
-        console.log('Generated stats:', generatedStats);
-        setReviewsStats(generatedStats);
+        setLoadingMoreReviews(true);
       }
-    } catch (error) {
-      console.error('Ошибка при загрузке отзывов:', error);
-      setReviewsError('Не удалось загрузить отзывы');
+      
+      const response = await axios.get<IReviewsResponse>(`${import.meta.env.VITE_API_URL}/api/products/${productId}/reviews?page=${page}&limit=${reviewsPerPage}`);
+      
+      if (response.data && response.data.reviews) {
+        if (append) {
+          setReviews(prev => [...prev, ...response.data.reviews]);
+        } else {
+          setReviews(response.data.reviews);
+        }
+        
+        // Проверяем, есть ли еще отзывы для загрузки
+        const hasMore = response.data.reviews.length === reviewsPerPage;
+        setHasMoreReviews(hasMore);
+        
+        if (response.data.stats) {
+          setReviewsStats(response.data.stats);
+        } else {
+          // Для append режима пересчитываем статистику для всех загруженных отзывов
+          const allReviews = append ? [...reviews, ...response.data.reviews] : response.data.reviews;
+          setReviewsStats(generateStatsFromReviews(allReviews));
+        }
+      }
+    } catch (err) {
+      console.error('Ошибка при загрузке отзывов:', err);
+      if (!append) {
+        setReviewsError('Не удалось загрузить отзывы');
+      }
     } finally {
-      setReviewsLoading(false);
+      if (!append) {
+        setReviewsLoading(false);
+      } else {
+        setLoadingMoreReviews(false);
+      }
     }
+  };
+
+  const loadMoreReviews = async () => {
+    if (!product || loadingMoreReviews) return;
+    
+    const nextPage = reviewsPage + 1;
+    setReviewsPage(nextPage);
+    await fetchReviews(product.id.toString(), nextPage, true);
+  };
+
+  const createReview = async (reviewData: ReviewFormData) => {
+    if (!product) return;
+
+    const formData = new FormData();
+    formData.append('product', product.id.toString());
+    formData.append('rating', reviewData.rating.toString());
+    formData.append('comment', reviewData.comment);
+
+    // Добавляем медиа файлы
+    if (reviewData.media && reviewData.media.length > 0) {
+      reviewData.media.forEach((file) => {
+        formData.append('media', file);
+      });
+    }
+
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/reviews`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(jwt && { 'Authorization': `Bearer ${jwt}` })
+        }
+      });
+
+      // Сбрасываем пагинацию и обновляем список отзывов
+      setReviewsPage(1);
+      await fetchReviews(product.id.toString(), 1, false);
+      
+      // Закрываем форму
+      setShowReviewForm(false);
+    } catch (error) {
+      console.error('Ошибка при создании отзыва:', error);
+      throw error;
+    }
+  };
+
+  const updateReview = async (reviewData: ReviewFormData) => {
+    if (!product || !editingReview) return;
+
+    const formData = new FormData();
+    formData.append('rating', reviewData.rating.toString());
+    formData.append('comment', reviewData.comment);
+
+    // Добавляем медиа файлы
+    if (reviewData.media && reviewData.media.length > 0) {
+      reviewData.media.forEach((file) => {
+        formData.append('media', file);
+      });
+    }
+
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/reviews/by-product/${product.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(jwt && { 'Authorization': `Bearer ${jwt}` })
+        }
+      });
+
+      // Сбрасываем пагинацию и обновляем список отзывов
+      setReviewsPage(1);
+      await fetchReviews(product.id.toString(), 1, false);
+      
+      // Закрываем форму
+      setShowReviewForm(false);
+      setEditingReview(null);
+      setIsReviewFormEditing(false);
+    } catch (error) {
+      console.error('Ошибка при обновлении отзыва:', error);
+      throw error;
+    }
+  };
+
+  const deleteReview = async () => {
+    if (!product) return;
+
+    if (!confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/reviews/by-product/${product.id}`, {
+        headers: {
+          ...(jwt && { 'Authorization': `Bearer ${jwt}` })
+        }
+      });
+
+      // Сбрасываем пагинацию и обновляем список отзывов
+      setReviewsPage(1);
+      await fetchReviews(product.id.toString(), 1, false);
+    } catch (error) {
+      console.error('Ошибка при удалении отзыва:', error);
+      alert('Не удалось удалить отзыв. Попробуйте еще раз.');
+    }
+  };
+
+  // Обработчики для формы отзыва
+  const handleCreateReview = () => {
+    setEditingReview(null);
+    setIsReviewFormEditing(false);
+    setShowReviewForm(true);
+  };
+
+  const handleEditReview = (review: IReview) => {
+    setEditingReview(review);
+    setIsReviewFormEditing(true);
+    setShowReviewForm(true);
+  };
+
+  const handleDeleteReview = () => {
+    deleteReview();
+  };
+
+  const handleReviewFormSubmit = async (reviewData: ReviewFormData) => {
+    if (isReviewFormEditing && editingReview) {
+      await updateReview(reviewData);
+    } else {
+      await createReview(reviewData);
+    }
+  };
+
+  const handleReviewFormCancel = () => {
+    setShowReviewForm(false);
+    setEditingReview(null);
+    setIsReviewFormEditing(false);
   };
 
   useEffect(() => {
     const fetchProduct = async () => {
-      setIsLoading(true);
+      if (!id) return;
+
       try {
-        const { data } = await axios.get<IProductDetailResponse>(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
-        setProduct(data.data);
-        // Устанавливаем первое изображение как текущее или первое видео, если нет изображений
-        if (data.data.images && data.data.images.length > 0) {
-          setCurrentImage(`${import.meta.env.VITE_API_URL}${data.data.images[0].url}`);
-        } else if (data.data.videos && data.data.videos.length > 0) {
-          setCurrentImage(`${import.meta.env.VITE_API_URL}${data.data.videos[0].url}`);
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await axios.get<IProductDetailResponse>(`${import.meta.env.VITE_API_URL}/api/products/${id}?populate=*`);
+        
+        if (response.data && response.data.data) {
+          setProduct(response.data.data);
+          
+          if (response.data.data.images && response.data.data.images.length > 0) {
+            setCurrentImage(`${import.meta.env.VITE_API_URL}${response.data.data.images[0].url}`);
+          }
+          
+          if (response.data.data.variantColors && response.data.data.variantColors.length > 0) {
+            const firstVariant = response.data.data.variantColors[0];
+            setSelectedColor(firstVariant.id);
+            setSelectedVariant(firstVariant);
+          }
+          
+          await fetchReviews(id);
         }
-        // Устанавливаем первый доступный цвет как выбранный
-        if (data.data.variantColors && data.data.variantColors.length > 0) {
-          setSelectedColor(data.data.variantColors[0].id);
-          setSelectedVariant(data.data.variantColors[0]);
-        }
-      } catch (error) {
-        console.error('Ошибка при загрузке данных о продукте:', error);
-        setError('Не удалось загрузить информацию о продукте. Пожалуйста, попробуйте позже.');
+      } catch (err) {
+        console.error('Ошибка при загрузке продукта:', err);
+        setError('Не удалось загрузить информацию о продукте');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (id) {
-      fetchProduct();
-      fetchReviews(id);
-    }
+    fetchProduct();
   }, [id]);
 
   const handleImageClick = (url: string) => {
     setCurrentImage(`${import.meta.env.VITE_API_URL}${url}`);
-    
-    // Определяем индекс для лайтбокса
-    const allMedia = [...(product?.images || []), ...(product?.videos || [])];
-    const index = allMedia.findIndex(media => media.url === url);
-    
-    if (index !== -1) {
-      openLightbox(index);
+  };
+
+  const handleMainImageClick = () => {
+    if (product) {
+      // Создаем массивы точно так же как в getLightboxItems
+      const allLightboxItems = getLightboxItems();
+      
+      // Получаем URL текущего изображения без VITE_API_URL
+      let currentMediaUrl = currentImage;
+      if (currentMediaUrl.startsWith(import.meta.env.VITE_API_URL)) {
+        currentMediaUrl = currentMediaUrl.replace(import.meta.env.VITE_API_URL, '');
+      }
+      
+      // Ищем индекс в массиве лайтбокса
+      const index = allLightboxItems.findIndex(item => {
+        if (item.type === 'image') {
+          const itemUrl = item.src.replace(import.meta.env.VITE_API_URL, '');
+          return itemUrl === currentMediaUrl;
+        } else if (item.type === 'video') {
+          const itemUrl = item.sources[0].src.replace(import.meta.env.VITE_API_URL, '');
+          return itemUrl === currentMediaUrl;
+        }
+        return false;
+      });
+      
+      if (index !== -1) {
+        openLightbox(index);
+      }
     }
   };
 
   const handleColorSelect = (colorId: number) => {
     setSelectedColor(colorId);
-    // Находим выбранный вариант цвета
-    const variant = product?.variantColors.find(v => v.id === colorId);
+    
+    const variant = product?.variantColors?.find(v => v.id === colorId);
     if (variant) {
       setSelectedVariant(variant);
-      // Если у выбранного цвета есть изображение, устанавливаем его как текущее
-      if (variant.image) {
-        setCurrentImage(`${import.meta.env.VITE_API_URL}${variant.image.url}`);
-      } else if (variant.images && variant.images.length > 0) {
-        setCurrentImage(`${import.meta.env.VITE_API_URL}${variant.images[0].url}`);
-      } else if (variant.videos && variant.videos.length > 0) {
-        setCurrentImage(`${import.meta.env.VITE_API_URL}${variant.videos[0].url}`);
-      }
     }
   };
 
   const handleAddToCart = () => {
-    if (!product || !selectedVariant) return;
+    if (!selectedVariant || !product) return;
 
     setIsAddingToCart(true);
-
-    // Создаем объект товара для добавления в корзину
-    const cartItem = {
-      id: product.id,
-      colorId: selectedVariant.id,
-      count: 1,
-      name: product.title,
-      price: selectedVariant.price,
-      sale_price: selectedVariant.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : null,
-      image: currentImage.replace(`${import.meta.env.VITE_API_URL}`, ''),
-      mediaType: isVideoUrl(currentImage) ? 'video' as const : 'image' as const,
-      color: {
-        name: selectedVariant.color.name,
-        hex: selectedVariant.color.hex
-      }
-    };
-
-    // Добавляем товар в корзину
-    dispatch(cartActions.add(cartItem));
-
-    // Имитация загрузки для лучшего UX
-    setTimeout(() => {
+    
+    try {
+      dispatch(cartActions.add({
+        id: product.id,
+        colorId: selectedVariant.id,
+        count: 1,
+        name: product.title,
+        price: selectedVariant.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : selectedVariant.price,
+        sale_price: selectedVariant.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : null,
+        image: product.images.length > 0 ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` : '',
+        color: {
+          name: selectedVariant.color ? selectedVariant.color.name : '',
+          hex: selectedVariant.color ? selectedVariant.color.hex : ''
+        }
+      }));
+      
+      setTimeout(() => {
+        setIsAddingToCart(false);
+      }, 500);
+    } catch (error) {
+      console.error('Ошибка при добавлении в корзину:', error);
       setIsAddingToCart(false);
-    }, 500);
+    }
   };
 
   const goBack = () => {
     navigate(-1);
   };
 
-  // Функция для прокрутки миниатюр влево
-  const scrollThumbnailsLeft = () => {
-    if (thumbnailsRef.current) {
-      thumbnailsRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-    }
-  };
-
-  // Функция для прокрутки миниатюр вправо
-  const scrollThumbnailsRight = () => {
-    if (thumbnailsRef.current) {
-      thumbnailsRef.current.scrollBy({ left: 200, behavior: 'smooth' });
-    }
-  };
-
-  // Создаем объект IProduct для использования в FavoritesButton
   const getProductForFavorites = (): IProduct => {
-    if (!product || !selectedVariant) {
+    if (!product) {
       return {
         id: 0,
         title: '',
-        slug: '',
         price: 0,
-        sale_price: 0,
-        discount_percent: 0,
-        inStock: false
+        on_sale: false,
+        sale_price: null,
+        images: [],
+        averageRating: null,
+        reviewCount: 0
       };
     }
-    
-    const discount_percent = selectedVariant.on_sale && selectedVariant.sale_price && selectedVariant.price > 0
-      ? Math.round((1 - selectedVariant.sale_price / selectedVariant.price) * 100)
-      : 0;
-    
+
     return {
       id: product.id,
       title: product.title,
-      slug: product.slug,
-      price: selectedVariant.price,
-      sale_price: selectedVariant.sale_price || 0,
-      discount_percent,
-      inStock: selectedVariant.stock > 0,
-      image: product.images.length > 0 ? product.images[0].url : undefined,
-      variantColorIds: product.variantColors.map(v => v.id)
+      price: selectedVariant?.price ?? 0,
+      on_sale: selectedVariant?.on_sale ?? false,
+      sale_price: selectedVariant?.sale_price ?? null,
+      images: product.images,
+      averageRating: product.averageRating,
+      reviewCount: product.reviewCount
     };
   };
 
-  // Функция для переключения развернутости текста отзыва
   const toggleReviewExpanded = (reviewId: number) => {
     setExpandedReviews(prev => {
       const newSet = new Set(prev);
@@ -477,509 +617,64 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
       <div className={styles.content}>
         {/* Галерея изображений */}
-        <div className={styles.gallery}>
-          <div 
-            className={cn(styles.mainImage, {
-              [styles.videoMain]: currentImage && isVideoUrl(currentImage)
-            })}
-            onClick={() => {
-              if (product) {
-                const allMedia = [...product.images, ...product.videos];
-                const currentMediaUrl = currentImage.replace(`${import.meta.env.VITE_API_URL}`, '');
-                const index = allMedia.findIndex(media => media.url === currentMediaUrl);
-                
-                if (index !== -1) {
-                  openLightbox(index);
-                }
-              }
-            }}
-          >
-            {currentImage && isVideoUrl(currentImage) ? (
-              <video 
-                src={currentImage}
-                controls
-                autoPlay
-                muted
-                loop
-                className={styles.videoPlayer}
-              />
-            ) : (
-              <img
-                src={currentImage || noImage}
-                alt={product.title}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = noImage;
-                }}
-              />
-            )}
-          </div>
-          
-          {/* Галерея миниатюр - изображения и видео */}
-          <div className={styles.thumbnailsContainer}>
-            <button className={styles.thumbnailScrollButton} onClick={scrollThumbnailsLeft} aria-label="Прокрутить влево">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            
-            <div 
-              className={styles.thumbnails} 
-              ref={thumbnailsRef}
-              onClick={(e) => {
-                // Обработка клика на псевдоэлементы для прокрутки
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                
-                // Если клик был в левой части
-                if (x < 40) {
-                  scrollThumbnailsLeft();
-                }
-                // Если клик был в правой части
-                else if (x > rect.width - 40) {
-                  scrollThumbnailsRight();
-                }
-              }}
-            >
-              {/* Миниатюры изображений */}
-              {product.images && product.images.length > 0 && (
-                product.images.map((image, index) => (
-                  <div
-                    key={`img-${index}`}
-                    className={cn(styles.thumbnail, {
-                      [styles.active]: currentImage === `${import.meta.env.VITE_API_URL}${image.url}`
-                    })}
-                    onClick={() => handleImageClick(image.url)}
-                  >
-                    <img
-                      src={`${import.meta.env.VITE_API_URL}${image.url}`}
-                      alt={`${product.title} ${index + 1}`}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = noImage;
-                      }}
-                    />
-                  </div>
-                ))
-              )}
-              
-              {/* Миниатюры видео */}
-              {product.videos && product.videos.length > 0 && (
-                product.videos.map((video, index) => (
-                  <div
-                    key={`video-${index}`}
-                    className={cn(styles.thumbnail, styles.videoThumbnailWrapper, {
-                      [styles.active]: currentImage === `${import.meta.env.VITE_API_URL}${video.url}`
-                    })}
-                    onClick={() => handleImageClick(video.url)}
-                  >
-                    <div className={styles.videoThumbnail}>
-                      {/* Используем превью из самого видео */}
-                      {videoThumbnails.get(video.url) ? (
-                        <img 
-                          src={videoThumbnails.get(video.url)}
-                          alt={`${product.title} видео ${index + 1}`}
-                        />
-                      ) : (
-                        <img 
-                          src={video.thumbnail 
-                            ? `${import.meta.env.VITE_API_URL}${video.thumbnail}` 
-                            : product.images.length > 0 
-                              ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` 
-                              : noImage
-                          }
-                          alt={`${product.title} видео ${index + 1}`}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = noImage;
-                          }}
-                        />
-                      )}
-                      <div className={styles.videoIcon}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <circle cx="12" cy="12" r="10" fill="rgba(0, 0, 0, 0.5)" stroke="white" strokeWidth="1.5"/>
-                          <path d="M10 8L16 12L10 16V8Z" fill="white" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <button className={styles.thumbnailScrollButton} onClick={scrollThumbnailsRight} aria-label="Прокрутить вправо">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <ProductGallery
+          product={product}
+          currentImage={currentImage}
+          onImageClick={handleImageClick}
+          onMainImageClick={handleMainImageClick}
+          selectedColor={selectedColor}
+        />
 
         {/* Информация о продукте */}
-        <div className={styles.info}>
-          <h1 className={styles.title}>{product.title}</h1>
-
-          {/* Рейтинг и отзывы */}
-          <div className={styles.rating}>
-            <div className={styles.stars}>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <svg
-                  key={index}
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill={index < Math.round(product.averageRating || 0) ? '#EBBA1A' : 'none'}
-                  stroke={index < Math.round(product.averageRating || 0) ? 'none' : '#C4C4C4'}
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M8 1L10.163 5.27926L15 6.11852L11.5 9.41574L12.326 14L8 11.7793L3.674 14L4.5 9.41574L1 6.11852L5.837 5.27926L8 1Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ))}
-            </div>
-            <span className={styles.reviewCount}>{product.reviewCount} отзыва</span>
-          </div>
-
-          {/* Статус наличия и артикул */}
-          <div className={styles.statusBlock}>
-            <span className={cn(styles.status, {
-              [styles.inStock]: selectedVariant && selectedVariant.stock > 0,
-              [styles.outOfStock]: !selectedVariant || selectedVariant.stock <= 0
-            })}>
-              {selectedVariant && selectedVariant.stock > 0 ? 'В наличии' : 'Нет в наличии'}
-            </span>
-            <span className={styles.articleNumber}>Артикул: {product.id}</span>
-          </div>
-
-          {/* Цена */}
-          <div className={styles.priceBlock}>
-            <span className={styles.currentPrice}>
-              {selectedVariant?.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : selectedVariant?.price} ₽
-            </span>
-            {selectedVariant?.on_sale && selectedVariant.sale_price && (
-              <span className={styles.oldPrice}>{selectedVariant.price} ₽</span>
-            )}
-            {selectedVariant?.on_sale && selectedVariant.sale_price && selectedVariant.price > selectedVariant.sale_price && (
-              <span className={styles.discount}>
-                -{Math.round((1 - selectedVariant.sale_price / selectedVariant.price) * 100)}%
-              </span>
-            )}
-          </div>
-
-          {/* Варианты цветов */}
-          {product.variantColors && product.variantColors.length > 0 && (
-            <div className={styles.colors}>
-              <h3 className={styles.colorsTitle}>Цвет</h3>
-              <div className={styles.colorOptions}>
-                {product.variantColors.map(variant => (
-                  <div
-                    key={variant.id}
-                    className={cn(styles.colorOption, {
-                      [styles.active]: selectedColor === variant.id
-                    })}
-                    onClick={() => handleColorSelect(variant.id)}
-                    title={variant.color.name}
-                  >
-                    <div
-                      className={styles.colorInner}
-                      style={{ backgroundColor: variant.color.hex }}
-                    ></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Кнопки действий */}
-          <div className={styles.actions}>
-            <button
-              className={cn(styles.addToCartButton, {
-                [styles.loading]: isAddingToCart
-              })}
-              disabled={!selectedVariant?.stock || isAddingToCart}
-              onClick={handleAddToCart}
-            >
-              {isAddingToCart ? (
-                <span className={styles.loader}></span>
-              ) : (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 1.66699L2.5 5.00033V16.667C2.5 17.109 2.67559 17.5329 2.98816 17.8455C3.30072 18.158 3.72464 18.3337 4.16667 18.3337H15.8333C16.2754 18.3337 16.6993 18.158 17.0118 17.8455C17.3244 17.5329 17.5 17.109 17.5 16.667V5.00033L15 1.66699H5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2.5 5H17.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M13.3334 8.33301C13.3334 9.21706 12.9822 10.0648 12.357 10.6899C11.7319 11.3151 10.8842 11.6663 10.0001 11.6663C9.11603 11.6663 8.26818 11.3151 7.64306 10.6899C7.01794 10.0648 6.66675 9.21706 6.66675 8.33301" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  В корзину
-                </>
-              )}
-            </button>
-            <FavoritesButton className={styles.favoriteButton} product={getProductForFavorites()} />
-          </div>
-        </div>
+        <ProductInfo
+          product={product}
+          selectedColor={selectedColor}
+          selectedVariant={selectedVariant}
+          isAddingToCart={isAddingToCart}
+          onColorSelect={handleColorSelect}
+          onAddToCart={handleAddToCart}
+          getProductForFavorites={getProductForFavorites}
+        />
       </div>
 
       {/* Дополнительная информация о продукте */}
       <div className={styles.additionalInfo}>
         {/* Характеристики */}
-        {product.specifications && product.specifications.length > 0 && (
-          <div className={styles.specifications}>
-            <h2 className={styles.specificationsTitle}>Характеристики</h2>
-            <div className={styles.specificationsList}>
-              {product.specifications.map(spec => (
-                <div key={spec.id} className={styles.specificationItem}>
-                  <span className={styles.specName}>{spec.name}</span>
-                  <span className={styles.specValue}>{spec.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <ProductSpecifications product={product} />
 
         {/* Описание */}
-        {product.description && product.description.length > 0 && (
-          <div className={styles.description}>
-            <h2 className={styles.descriptionTitle}>Описание</h2>
-            <div className={styles.descriptionContent}>
-              {product.description.map((item, index) => {
-                if (item.type === 'paragraph') {
-                  return (
-                    <p key={index}>
-                      {item.children.map((child, childIndex) => (
-                        <span key={childIndex}>{child.text}</span>
-                      ))}
-                    </p>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          </div>
-        )}
+        <ProductDescription product={product} />
         
         {/* Отзывы */}
-        <div className={styles.reviews}>
-          <h2 className={styles.reviewsTitle}>Отзывы покупателей</h2>
-          
-          {reviewsLoading ? (
-            <div className={styles.reviewsLoading}>Загрузка отзывов...</div>
-          ) : reviewsError ? (
-            <div className={styles.reviewsError}>{reviewsError}</div>
-          ) : reviews.length > 0 ? (
-            <div className={styles.reviewsContainer}>
-              {/* Список отзывов */}
-              <div className={styles.reviewsList}>
-                {reviews.map(review => (
-                  <div key={review.id} className={styles.review}>
-                    <div className={styles.reviewHeader}>
-                      <div className={styles.reviewUser}>
-                        {review.user.avatar ? (
-                          <img 
-                            src={`${import.meta.env.VITE_API_URL}${review.user.avatar.url}`}
-                            alt={review.user.username}
-                            className={styles.reviewUserAvatar}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className={styles.reviewUserAvatarPlaceholder}>
-                            {review.user.username.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className={styles.reviewUserInfo}>
-                          <span className={styles.reviewUserName}>{review.user.username}</span>
-                          <span className={styles.reviewDate}>
-                            {new Date(review.createdAt).toLocaleDateString('ru-RU')}
-                          </span>
-                        </div>
-                      </div>
-                      <div className={styles.reviewRating}>
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <svg
-                            key={index}
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill={index < review.rating ? '#EBBA1A' : 'none'}
-                            stroke={index < review.rating ? 'none' : '#C4C4C4'}
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M8 1L10.163 5.27926L15 6.11852L11.5 9.41574L12.326 14L8 11.7793L3.674 14L4.5 9.41574L1 6.11852L5.837 5.27926L8 1Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Информация о варианте товара */}
-                    {review.variant && (
-                      <div className={styles.reviewVariant}>
-                        {review.variant.color && (
-                          <span className={styles.variantItem}>
-                            <span className={styles.variantLabel}>Цвет товара:</span> {review.variant.color}
-                          </span>
-                        )}
-                        {review.variant.size && (
-                          <span className={styles.variantItem}>
-                            <span className={styles.variantLabel}>Размер:</span> {review.variant.size}
-                          </span>
-                        )}
-                        {Object.entries(review.variant).map(([key, value]) => {
-                          if (key !== 'color' && key !== 'size' && value) {
-                            return (
-                              <span key={key} className={styles.variantItem}>
-                                <span className={styles.variantLabel}>{key}:</span> {value}
-                              </span>
-                            );
-                          }
-                          return null;
-                        })}
-                      </div>
-                    )}
-                    
-                    {review.comment && (
-                      <>
-                        <div className={cn(styles.reviewComment, {
-                          [styles.truncated]: !expandedReviews.has(review.id) && review.comment.length > 200
-                        })}>
-                          {expandedReviews.has(review.id) || review.comment.length <= 200 
-                            ? review.comment 
-                            : `${review.comment.slice(0, 200)}...`
-                          }
-                        </div>
-                        {review.comment.length > 200 && (
-                          <button 
-                            className={styles.readMoreButton}
-                            onClick={() => toggleReviewExpanded(review.id)}
-                          >
-                            {expandedReviews.has(review.id) ? 'Скрыть' : 'Читать полностью'}
-                          </button>
-                        )}
-                      </>
-                    )}
-                    
-                    {review.media && review.media.length > 0 && (
-                      <div className={styles.reviewMedia}>
-                        {review.media.map((media, index) => (
-                          <div 
-                            key={media.id} 
-                            className={cn(styles.reviewMediaItem, {
-                              [styles.reviewVideoItem]: media.type === 'video'
-                            })}
-                            onClick={() => openReviewLightbox(reviews, review.id, index)}
-                          >
-                            {media.type === 'image' ? (
-                              <img
-                                src={`${import.meta.env.VITE_API_URL}${media.url}`}
-                                alt="Фото отзыва"
-                                className={styles.reviewImage}
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = noImage;
-                                }}
-                              />
-                            ) : (
-                              <video
-                                src={`${import.meta.env.VITE_API_URL}${media.url}`}
-                                className={styles.reviewVideo}
-                                poster={media.thumbnail ? `${import.meta.env.VITE_API_URL}${media.thumbnail}` : undefined}
-                                muted
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Статистика рейтингов справа */}
-              {(reviewsStats || reviews.length > 0) && (
-                <div className={styles.reviewsStatsSidebar}>
-                  <div className={styles.statsHeader}>
-                    <div className={styles.overallRating}>
-                      <div className={styles.stars}>
-                        {Array.from({ length: 5 }).map((_, index) => {
-                          const rating = reviewsStats 
-                            ? reviewsStats.averageRating 
-                            : generateStatsFromReviews(reviews)?.averageRating || 0;
-                          return (
-                            <svg
-                              key={index}
-                              width="24"
-                              height="24"
-                              viewBox="0 0 16 16"
-                              fill={index < Math.round(rating) ? '#EBBA1A' : 'none'}
-                              stroke={index < Math.round(rating) ? 'none' : '#C4C4C4'}
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path d="M8 1L10.163 5.27926L15 6.11852L11.5 9.41574L12.326 14L8 11.7793L3.674 14L4.5 9.41574L1 6.11852L5.837 5.27926L8 1Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          );
-                        })}
-                      </div>
-                      <div>
-                        <span className={styles.ratingNumber}>
-                          {reviewsStats 
-                            ? reviewsStats.averageRating.toFixed(1) 
-                            : generateStatsFromReviews(reviews)?.averageRating.toFixed(1) || '0.0'
-                          }
-                        </span>
-                        <span className={styles.ratingMax}> / 5</span>
-                      </div>
-                    </div>
-                    <div className={styles.statsDescription}>
-                      Рейтинг формируется на основе актуальных отзывов
-                    </div>
-                  </div>
-                  
-                  {((reviewsStats && reviewsStats.ratingDistribution) || reviews.length > 0) && (
-                    <div className={styles.ratingDistribution}>
-                      {[5, 4, 3, 2, 1].map(rating => {
-                        let count = 0;
-                        let totalReviews = 0;
-                        
-                        if (reviewsStats && reviewsStats.ratingDistribution) {
-                          count = reviewsStats.ratingDistribution[rating] || 0;
-                          totalReviews = reviewsStats.reviewCount;
-                        } else if (reviews.length > 0) {
-                          count = reviews.filter(r => r.rating === rating).length;
-                          totalReviews = reviews.length;
-                        }
-                        
-                        const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
-                        
-                        return (
-                          <div key={rating} className={styles.ratingRow}>
-                            <div className={styles.ratingLabel}>
-                              {rating} звезд{rating === 1 ? 'а' : rating < 5 ? 'ы' : ''}
-                            </div>
-                            <div className={styles.ratingBar}>
-                              <div 
-                                className={styles.ratingFill} 
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                            <div className={styles.ratingCount}>{count}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  
-                  <div className={styles.statsFooter}>
-                    Отзывы могут оставлять только те, кто купил товар. Так мы формируем честный рейтинг
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={styles.noReviews}>
-              <p>Пока нет отзывов о данном товаре</p>
-              <p>Станьте первым, кто оставит отзыв!</p>
-            </div>
-          )}
-        </div>
+        <ProductReviews
+          reviews={reviews}
+          reviewsLoading={reviewsLoading}
+          reviewsError={reviewsError}
+          reviewsStats={reviewsStats}
+          expandedReviews={expandedReviews}
+          onToggleReviewExpanded={toggleReviewExpanded}
+          onOpenReviewLightbox={openReviewLightbox}
+          onCreateReview={handleCreateReview}
+          onEditReview={handleEditReview}
+          onDeleteReview={handleDeleteReview}
+          onLoadMoreReviews={loadMoreReviews}
+          hasMoreReviews={hasMoreReviews}
+          loadingMoreReviews={loadingMoreReviews}
+          currentUserId={currentUserId}
+          isAuthenticated={!!jwt}
+          generateStatsFromReviews={generateStatsFromReviews}
+        />
       </div>
+
+      {/* Форма отзыва */}
+      <ReviewForm
+        productId={product.id}
+        existingReview={editingReview}
+        isEditing={isReviewFormEditing}
+        isVisible={showReviewForm}
+        onSubmit={handleReviewFormSubmit}
+        onCancel={handleReviewFormCancel}
+      />
 
       {/* Лайтбокс для просмотра изображений и видео */}
       {product && (
