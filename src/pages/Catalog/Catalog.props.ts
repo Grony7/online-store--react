@@ -1,5 +1,5 @@
 import { HTMLAttributes } from 'react';
-import { IProduct } from '../../interfaces/products.interface';
+import { IProduct } from '../../interfaces/product.interface.ts';
 
 export interface CatalogProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductCardProps } from './ProductCard.props';
 import styles from './ProductCard.module.scss';
@@ -8,29 +8,21 @@ import { useDispatch } from 'react-redux';
 import { cartActions } from '../../store/cart.slice';
 import { AppDispatch } from '../../store/store';
 import FavoritesButton from '../FavoritesButton/FavoritesButton';
-import { favoritesActions } from '../../store/favorites.slice';
 
-export const ProductCard = ({ className, product, isFavoritePage = false, ...props }: ProductCardProps) => {
+export const ProductCard = ({ className, product, ...props }: ProductCardProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
-    
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Предотвращаем переход по ссылке, если кнопка внутри ссылки
+
+  const handleAddToCart = async (e: MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!product.inStock) return;
-        
+
     setIsAddingToCart(true);
-        
+
     try {
-      // Используем colorId из продукта или 1 по умолчанию
-      const colorId = product.variantColorIds?.[0] || 1;
-      console.log('Добавление товара в корзину:', {
-        productId: product.id,
-        colorId: colorId,
-        hasColorId: !!product.colorId
-      });
-      
+      const colorId = product.variantColorIds?.[0] || 0;
+
       // Добавляем товар в корзину с базовой информацией
       // Детальная информация загрузится автоматически на странице корзины
       dispatch(cartActions.add({
@@ -38,59 +30,24 @@ export const ProductCard = ({ className, product, isFavoritePage = false, ...pro
         colorId: colorId,
         count: 1
       }));
-      
+
     } catch (error) {
       console.error('Ошибка добавления товара в корзину:', error);
     } finally {
-      // Имитация загрузки для лучшего UX
       setTimeout(() => {
         setIsAddingToCart(false);
       }, 500);
     }
   };
 
-  const handleRemoveFromFavorites = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsRemoving(true);
-    
-    // Удаляем товар из избранного
-    dispatch(favoritesActions.remove(product.id));
-    
-    // Имитация загрузки для лучшего UX
-    setTimeout(() => {
-      setIsRemoving(false);
-    }, 500);
-  };
+  if (product.variantColorIds?.length === 0) return;
 
   return (
     <div className={cn(styles.card, className)} {...props}>
-      {product.discount_percent > 0 && (
+      {product.discount_percent && product.discount_percent > 0 && (
         <div className={styles.discount}>
-                    -{product.discount_percent}%
+          -{product.discount_percent}%
         </div>
-      )}
-      
-      {isFavoritePage && (
-        <button
-          className={cn(styles.removeButton, {
-            [styles.loading]: isRemoving
-          })}
-          type="button"
-          disabled={isRemoving}
-          onClick={handleRemoveFromFavorites}
-          aria-label="Удалить из избранного"
-        >
-          {isRemoving ? (
-            <span className={styles.loader}></span>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
       )}
 
       <Link to={`/products/${product.id}`} className={styles.imageWrapper}>
@@ -121,12 +78,12 @@ export const ProductCard = ({ className, product, isFavoritePage = false, ...pro
               {product.inStock ? 'В наличии' : 'Нет в наличии'}
             </span>
             <div className={styles.prices}>
-              {product.sale_price && 
+              {product.sale_price &&
                 <span className={styles.currentPrice}>
                   {product.sale_price.toLocaleString()} ₽
                 </span>
               }
-              {product.discount_percent > 0 && (
+              {product.discount_percent && product.discount_percent > 0 && (
                 <span className={styles.oldPrice}>
                   {product.price?.toLocaleString()} ₽
                 </span>
@@ -135,29 +92,28 @@ export const ProductCard = ({ className, product, isFavoritePage = false, ...pro
           </div>
 
           <div className={styles.actions}>
-            {!isFavoritePage && (
-              <>
-                <FavoritesButton 
-                  className={styles.wishlist}
-                  product={product}
-                />
-                <button
-                  className={cn(styles.addToCart, {
-                    [styles.disabled]: !product.inStock,
-                    [styles.loading]: isAddingToCart
-                  })}
-                  type="button"
-                  disabled={!product.inStock || isAddingToCart}
-                  onClick={handleAddToCart}
-                >
-                  {isAddingToCart ? (
-                    <span className={styles.loader}></span>
-                  ) : (
-                    'В корзину'
-                  )}
-                </button>
-              </>
-            )}
+            <>
+              <FavoritesButton
+                className={styles.wishlist}
+                product={product}
+              />
+              <button
+                className={cn(styles.addToCart, {
+                  [styles.disabled]: !product.inStock,
+                  [styles.loading]: isAddingToCart
+                })}
+                type="button"
+                disabled={!product.inStock || isAddingToCart}
+                onClick={handleAddToCart}
+              >
+                {isAddingToCart ? (
+                  <span className={styles.loader}></span>
+                ) : (
+                  'В корзину'
+                )}
+              </button>
+            </>
+
           </div>
         </div>
       </div>
@@ -165,4 +121,4 @@ export const ProductCard = ({ className, product, isFavoritePage = false, ...pro
   );
 };
 
-export default ProductCard; 
+export default ProductCard;

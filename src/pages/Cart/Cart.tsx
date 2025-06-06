@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import cn from 'classnames';
 import styles from './Cart.module.scss';
@@ -10,7 +10,27 @@ import { CartItemFull } from '../../interfaces/cart.interface';
 import CartItem from '../../components/CartItem/CartItem';
 import axios from 'axios';
 
-export const Cart: FC<CartProps> = ({ className, ...props }) => {
+const getItemsCountText = (count: number): string => {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return 'товаров';
+  }
+
+  switch (lastDigit) {
+    case 1:
+      return 'товар';
+    case 2:
+    case 3:
+    case 4:
+      return 'товара';
+    default:
+      return 'товаров';
+  }
+};
+
+export const Cart  = ({ className, ...props }: CartProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const { items: cartItems } = useSelector((state: RootState) => state.cart);
   const [items, setItems] = useState<CartItemFull[]>([]);
@@ -43,32 +63,28 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
         try {
 
           const url = `${import.meta.env.VITE_API_URL}/api/products/brief/${item.id}?colorId=${item.colorId}`;
-          
-          console.log('Запрос товара корзины:', { id: item.id, colorId: item.colorId, url });
-          
-          const response = await axios.get(url);
-          console.log('Ответ для товара', item.id, ':', response.data);
-          
+          const {data} = await axios.get(url);
+          console.log('Ответ для товара', item.id, ':', data);
+
           return {
             id: item.id,
             colorId: item.colorId,
             count: item.count,
             selected: item.selected !== undefined ? item.selected : true,
             details: {
-              id: response.data.id,
-              title: response.data.title,
-              price: response.data.price,
-              sale_price: response.data.sale_price || response.data.price,
-              on_sale: response.data.on_sale || false,
-              image: response.data.image,
-              quantity: response.data.quantity,
-              color: response.data.color
+              id: data.id,
+              title: data.title,
+              price: data.price,
+              sale_price: data.sale_price || data.price,
+              on_sale: data.on_sale || false,
+              image: data.image,
+              quantity: data.quantity,
+              color: data.color
             },
             isLoading: false,
             isError: false
           };
         } catch (error) {
-          console.error(`Ошибка загрузки товара ${item.id}:`, error);
           return {
             id: item.id,
             colorId: item.colorId,
@@ -98,9 +114,9 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
       setItems([]);
       return;
     }
-    
+
     // Обновляем только поля selected, сохраняя остальные данные
-    setItems(prevItems => 
+    setItems(prevItems =>
       prevItems.map(item => {
         const cartItem = cartItems.find(ci => ci.id === item.id && ci.colorId === item.colorId);
         if (cartItem) {
@@ -120,7 +136,7 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
       setIsAllSelected(false);
       return;
     }
-    
+
     const allSelected = items.every(item => item.selected);
     setIsAllSelected(allSelected);
   }, [items]);
@@ -141,24 +157,24 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
     // Находим текущий элемент и его состояние
     const currentItem = items.find(item => item.id === id && item.colorId === colorId);
     const newSelectedState = currentItem ? !currentItem.selected : true;
-    
+
     // Обновляем локальное состояние для немедленного отображения
-    setItems(prev => prev.map(item => 
-      item.id === id && item.colorId === colorId 
+    setItems(prev => prev.map(item =>
+      item.id === id && item.colorId === colorId
         ? { ...item, selected: newSelectedState }
         : item
     ));
-    
+
     // Обновляем состояние в Redux для сохранения при навигации
     dispatch(cartActions.toggleSelectItem({ id, colorId }));
   };
 
   const handleToggleSelectAll = () => {
     const newSelectedState = !isAllSelected;
-    
+
     // Обновляем локальное состояние
     setItems(prev => prev.map(item => ({ ...item, selected: newSelectedState })));
-    
+
     // Обновляем состояние в Redux
     if (newSelectedState) {
       dispatch(cartActions.selectAll());
@@ -168,7 +184,6 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
   };
 
   const handleRemoveSelected = () => {
-    // Вместо удаления товаров по одному, используем Redux экшен для удаления всех выбранных товаров
     dispatch(cartActions.removeSelected());
   };
 
@@ -180,40 +195,18 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
 
   // Расчет итоговой суммы только для выбранных товаров с загруженными данными
   const selectedItemsWithDetails = items.filter(item => item.selected && item.details);
-  
+
   const totalPrice = selectedItemsWithDetails.reduce((sum, item) => {
     if (!item.details) return sum;
-    
-    // Используем цену со скидкой если товар участвует в акции, иначе обычную цену
-    const effectivePrice = item.details.on_sale && item.details.sale_price 
-      ? item.details.sale_price 
+
+    const effectivePrice = item.details.on_sale && item.details.sale_price
+      ? item.details.sale_price
       : item.details.price;
-      
+
     return sum + effectivePrice * item.count;
   }, 0);
-    
+
   const selectedCount = selectedItemsWithDetails.length;
-
-  // Функция для склонения слова "товар"
-  const getItemsCountText = (count: number): string => {
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-      return 'товаров';
-    }
-
-    switch (lastDigit) {
-    case 1:
-      return 'товар';
-    case 2:
-    case 3:
-    case 4:
-      return 'товара';
-    default:
-      return 'товаров';
-    }
-  };
 
   return (
     <div className={cn(styles.cartPage, className)} {...props}>
@@ -247,14 +240,14 @@ export const Cart: FC<CartProps> = ({ className, ...props }) => {
                   </div>
                   <div className={styles.controlButtons}>
                     {selectedCount > 0 && (
-                      <button 
+                      <button
                         className={styles.removeSelectedButton}
                         onClick={handleRemoveSelected}
                       >
                         Удалить выбранные ({selectedCount})
                       </button>
                     )}
-                    <button 
+                    <button
                       className={styles.clearCartButton}
                       onClick={handleClearCart}
                     >

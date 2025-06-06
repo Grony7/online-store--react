@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import cn from 'classnames';
 import { IProductDetail, VariantColor } from '../../interfaces/product-detail.interface';
-import { IProduct } from '../../interfaces/products.interface';
+import { IProduct } from '../../interfaces/product.interface.ts';
 import FavoritesButton from '../FavoritesButton/FavoritesButton';
 import styles from './ProductInfo.module.scss';
 
@@ -128,4 +128,4 @@ const ProductInfo: FC<ProductInfoProps> = ({
   );
 };
 
-export default ProductInfo; 
+export default ProductInfo;

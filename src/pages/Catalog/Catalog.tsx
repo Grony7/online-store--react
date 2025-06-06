@@ -2,7 +2,7 @@ import styles from './Catalog.module.scss';
 import { IGetCatalog, CatalogProps} from './Catalog.props.ts';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { IProduct } from '../../interfaces/products.interface.ts';
+import { IProduct } from '../../interfaces/product.interface.ts';
 import { useEffect, useState } from 'react';
 import Title from '../../components/Title/Title.tsx';
 import ProductCard from '../../components/ProductCard/ProductCard.tsx';
@@ -17,7 +17,7 @@ const Catalog = ({ ...props }: CatalogProps) => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Record<string, string[] | number[]>>({});
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Состояние для пагинации
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -47,10 +47,10 @@ const Catalog = ({ ...props }: CatalogProps) => {
       if (key !== 'priceMin' && key !== 'priceMax' && key !== 'page') {
         // Сохраняем все значения параметра как есть, без разделения
         const values = queryParams.getAll(key);
-        
+
         // Проверяем, являются ли все значения числами
         const allNumbers = values.every(val => !isNaN(Number(val)) && val.trim() !== '');
-        
+
         if (allNumbers) {
           // Если все значения числовые, преобразуем их в числа
           filtersFromUrl[key] = values.map(val => Number(val));
@@ -79,7 +79,7 @@ const Catalog = ({ ...props }: CatalogProps) => {
         page: page.toString(),
         pageSize: pageSize.toString()
       };
-      
+
       if (filters) {
         console.log('Filters for API request:', filters);
         // Обработка диапазона цен
@@ -87,7 +87,7 @@ const Catalog = ({ ...props }: CatalogProps) => {
           params.priceMin = filters.priceRange[0].toString();
           params.priceMax = filters.priceRange[1].toString();
         }
-        
+
         // Обработка других фильтров (RAM, cores и т.д.)
         Object.entries(filters).forEach(([key, value]) => {
           if (key !== 'priceRange' && Array.isArray(value) && value.length > 0) {
@@ -97,13 +97,13 @@ const Catalog = ({ ...props }: CatalogProps) => {
           }
         });
       }
-      
+
       console.log('API request params:', params);
       const { data } = await axios.get<IGetCatalog>(
-        `${import.meta.env.VITE_API_URL}/api/products/category/${slug}`, 
+        `${import.meta.env.VITE_API_URL}/api/products/category/${slug}`,
         { params }
       );
-      
+
       setCategory(data.data.category.name);
       setProducts(data.data.products);
       setTotalPages(data.meta.pagination.pageCount);
@@ -120,19 +120,19 @@ const Catalog = ({ ...props }: CatalogProps) => {
     console.log('Applied filters:', selectedFilters);
     setActiveFilters(selectedFilters);
     setCurrentPage(1); // Сбрасываем на первую страницу при применении фильтров
-    
+
     // Обновляем URL с новыми параметрами фильтрации
     const queryParams = new URLSearchParams();
-    
+
     // Добавляем номер страницы (всегда 1 при новых фильтрах)
     queryParams.set('page', '1');
-    
+
     // Добавляем параметры цены
     if (selectedFilters.priceRange && Array.isArray(selectedFilters.priceRange) && selectedFilters.priceRange.length === 2) {
       queryParams.set('priceMin', selectedFilters.priceRange[0].toString());
       queryParams.set('priceMax', selectedFilters.priceRange[1].toString());
     }
-    
+
     // Добавляем другие параметры
     Object.entries(selectedFilters).forEach(([key, value]) => {
       if (key !== 'priceRange' && Array.isArray(value) && value.length > 0) {
@@ -145,15 +145,15 @@ const Catalog = ({ ...props }: CatalogProps) => {
         });
       }
     });
-    
+
     // Формируем новый URL и выполняем навигацию
-    const newUrl = queryParams.toString() 
+    const newUrl = queryParams.toString()
       ? `${location.pathname}?${queryParams.toString()}`
       : location.pathname;
-    
+
     console.log('New URL:', newUrl);
     navigate(newUrl, { replace: true });
-    
+
     // Запрашиваем продукты с новыми фильтрами
     getProducts(selectedFilters, 1);
     setIsFilterVisible(false);
@@ -162,17 +162,17 @@ const Catalog = ({ ...props }: CatalogProps) => {
   // Функция для смены страницы
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    
+
     // Обновляем URL с новым номером страницы
     const queryParams = new URLSearchParams(location.search);
     queryParams.set('page', page.toString());
-    
+
     const newUrl = `${location.pathname}?${queryParams.toString()}`;
     navigate(newUrl, { replace: true });
-    
+
     // Запрашиваем продукты для новой страницы
     getProducts(activeFilters, page);
-    
+
     // Прокручиваем страницу вверх
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -196,9 +196,9 @@ const Catalog = ({ ...props }: CatalogProps) => {
       <div className={styles.content}>
         {/* Панель фильтров (видима только на десктопе) */}
         <div className={styles.filtersWrapper}>
-          <FilterPanel 
-            categorySlug={slug} 
-            onApply={handleFilterApply} 
+          <FilterPanel
+            categorySlug={slug}
+            onApply={handleFilterApply}
             initialFilters={activeFilters}
             className={styles.filtersPanel}
           />
@@ -206,8 +206,8 @@ const Catalog = ({ ...props }: CatalogProps) => {
 
         <div className={styles.productsSection}>
           <div className={styles.filtersControls}>
-            <button 
-              className={styles.filterButton} 
+            <button
+              className={styles.filterButton}
               onClick={toggleFilter}
             >
               <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -243,7 +243,7 @@ const Catalog = ({ ...props }: CatalogProps) => {
           {/* Пагинация */}
           {!isLoading && totalPages > 1 && (
             <div className={styles.pagination}>
-              <button 
+              <button
                 className={`${styles.paginationButton} ${currentPage === 1 ? styles.disabled : ''}`}
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -252,18 +252,18 @@ const Catalog = ({ ...props }: CatalogProps) => {
                   <path d="M7 1L1 8L7 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                 const isCurrentPage = page === currentPage;
                 const shouldShow = Math.abs(page - currentPage) <= 2 || page === 1 || page === totalPages;
-                
+
                 if (!shouldShow) {
                   if (page === currentPage - 3 || page === currentPage + 3) {
                     return <span key={page} className={styles.paginationDots}>...</span>;
                   }
                   return null;
                 }
-                
+
                 return (
                   <button
                     key={page}
@@ -274,8 +274,8 @@ const Catalog = ({ ...props }: CatalogProps) => {
                   </button>
                 );
               })}
-              
-              <button 
+
+              <button
                 className={`${styles.paginationButton} ${currentPage === totalPages ? styles.disabled : ''}`}
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -310,8 +310,8 @@ const Catalog = ({ ...props }: CatalogProps) => {
           </button>
         </div>
         <div className={styles.mobileFilterContent}>
-          <FilterPanel 
-            categorySlug={slug} 
+          <FilterPanel
+            categorySlug={slug}
             onApply={handleFilterApply}
             initialFilters={activeFilters}
             onVisibilityChange={setIsFilterVisible}

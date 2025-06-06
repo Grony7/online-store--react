@@ -1,76 +1,77 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
-import { FilterPanelProps, IFilters } from './FilterPanel.props';
+import { FilterPanelProps } from './FilterPanel.props';
 import styles from './FilterPanel.module.scss';
+import { IFilters, IGetFilters } from '../../interfaces/filter-panel.interface.ts';
 
-const FilterPanel = ({ 
-  categorySlug, 
-  onApply, 
+const API_URL = import.meta.env.VITE_API_URL;
+
+const FilterPanel = ({
+  categorySlug,
+  onApply,
   onVisibilityChange,
   initialFilters,
-  className, 
-  ...props 
+  className,
+  ...props
 }: FilterPanelProps) => {
   const [filters, setFilters] = useState<IFilters | null>(null);
   const [selected, setSelected] = useState<Record<string, string[] | number[]>>({});
   const [minPriceInput, setMinPriceInput] = useState<string>('');
   const [maxPriceInput, setMaxPriceInput] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
-  
-  // Определяем, нужно ли использовать стандартные стили панели или нет
-  const isMobileMode = onVisibilityChange !== undefined;
-  
-  // Логируем initialFilters при изменении
-  useEffect(() => {
-    if (initialFilters) {
-      console.log('initialFilters в FilterPanel:', initialFilters);
-    }
-  }, [initialFilters]);
-  
-  // Загрузка доступных фильтров для категории
-  useEffect(() => {
-    if (categorySlug) {
-      axios
-        .get(`${import.meta.env.VITE_API_URL}/api/categories/${categorySlug}/filters`)
-        .then(res => {
-          const f: IFilters = res.data.data.filters;
-          setFilters(f);
 
-          // Инициализируем значения фильтров
-          const init: Record<string, string[] | number[]> = {
-            priceRange: [f.priceRange.min, f.priceRange.max]
-          };
-          
-          f.specifications.forEach(spec => {
-            init[spec.slug] = [];
-          });
-          
-          // Если есть начальные фильтры, применяем их
-          if (initialFilters) {
-            Object.entries(initialFilters).forEach(([key, value]) => {
-              if (key === 'priceRange' && Array.isArray(value) && value.length === 2) {
-                init.priceRange = value;
-                setMinPriceInput(value[0].toString());
-                setMaxPriceInput(value[1].toString());
-              } else if (key !== 'priceRange' && Array.isArray(value)) {
-                // Убеждаемся, что все значения сохраняются как строки
-                init[key] = value.map(val => String(val));
-              }
-            });
-          } else {
-            // Установка начальных значений для полей ввода цены
-            setMinPriceInput(f.priceRange.min.toString());
-            setMaxPriceInput(f.priceRange.max.toString());
+  const isMobileMode = onVisibilityChange !== undefined;
+
+
+  const fetchAndInitializeFilters = async () => {
+    try {
+      // 1. Запрашиваем фильтры для категории
+      const {data} = await axios.get<IGetFilters>(
+        `${API_URL}/api/categories/${categorySlug}/filters`
+      );
+      const filtersFromApi = data.filters;
+      setFilters(filtersFromApi);
+
+      const initialValues: Record<string, string[] | number[]> = {
+        priceRange: [filtersFromApi.priceRange.min, filtersFromApi.priceRange.max],
+      };
+
+      filtersFromApi.specifications.forEach((spec) => {
+        initialValues[spec.slug] = [];
+      });
+
+      // 3. Если переданы initialFilters, перезаписываем для них значения
+      if (initialFilters) {
+        Object.entries(initialFilters).forEach(([key, value]) => {
+          if (key === 'priceRange' && Array.isArray(value) && value.length === 2) {
+            initialValues.priceRange = value;
+            setMinPriceInput(String(value[0]));
+            setMaxPriceInput(String(value[1]));
+          } else if (key !== 'priceRange' && Array.isArray(value)) {
+            // приводим всё к строке
+            initialValues[key] = value.map((val) => String(val));
           }
-          
-          setSelected(init);
-          setIsInitialized(true);
-        })
-        .catch(console.error);
+        });
+      } else {
+        // 4. Если начальных фильтров нет, устанавливаем значения полей ввода цены
+        setMinPriceInput(String(filtersFromApi.priceRange.min));
+        setMaxPriceInput(String(filtersFromApi.priceRange.max));
+      }
+
+      setSelected(initialValues);
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Ошибка при загрузке фильтров:', error);
     }
+  };
+
+  useEffect(() => {
+    if (!categorySlug) return;
+    fetchAndInitializeFilters();
   }, [categorySlug, initialFilters]);
+
 
   // Убедимся, что поля ввода цены всегда содержат актуальные значения из состояния selected
   useEffect(() => {
@@ -85,9 +86,9 @@ const FilterPanel = ({
     if (value === '' || /^\d+$/.test(value)) {
       if (isMin) {
         setMinPriceInput(value);
-        
+
         if (value === '') return;
-        
+
         const newMin = parseInt(value);
         if (filters && newMin >= filters.priceRange.min && newMin <= (selected.priceRange as number[])[1]) {
           setSelected(prev => ({
@@ -97,9 +98,9 @@ const FilterPanel = ({
         }
       } else {
         setMaxPriceInput(value);
-        
+
         if (value === '') return;
-        
+
         const newMax = parseInt(value);
         if (filters && newMax <= filters.priceRange.max && newMax >= (selected.priceRange as number[])[0]) {
           setSelected(prev => ({
@@ -114,7 +115,7 @@ const FilterPanel = ({
   // Обработка потери фокуса полем ввода цены
   const handlePriceInputBlur = (isMin: boolean) => {
     if (!filters) return;
-    
+
     if (isMin) {
       if (minPriceInput === '' || parseInt(minPriceInput) < filters.priceRange.min) {
         setMinPriceInput(filters.priceRange.min.toString());
@@ -175,14 +176,12 @@ const FilterPanel = ({
 
   return (
     <div className={filterPanelClasses} {...props}>
-      {/* Только для десктопа: заголовок панели фильтров */}
       {!isMobileMode && (
         <div className={styles.filterHeader}>
           <h3 className={styles.filterTitle}>Фильтры</h3>
         </div>
       )}
 
-      {/* Блок Цена */}
       <div className={styles.filterGroup}>
         <label className={styles.filterGroupTitle}>Цена, ₽</label>
         <Slider

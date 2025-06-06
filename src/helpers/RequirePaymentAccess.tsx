@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
@@ -22,4 +22,4 @@ const RequirePaymentAccess = ({ children }: { children: ReactNode }) => {
   return <Navigate to="/checkout" replace />;
 };
 
-export default RequirePaymentAccess; 
+export default RequirePaymentAccess;

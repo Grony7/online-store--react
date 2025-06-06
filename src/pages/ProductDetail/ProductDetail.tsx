@@ -8,7 +8,7 @@ import { IProductDetail, IProductDetailResponse, VariantColor } from '../../inte
 import { IReviewsResponse, IReview } from '../../interfaces/reviews.interface';
 import { useDispatch, useSelector } from 'react-redux';
 import { cartActions } from '../../store/cart.slice';
-import { IProduct } from '../../interfaces/products.interface';
+import { IProduct } from '../../interfaces/product.interface.ts';
 import {
   ProductGallery,
   ProductInfo,
@@ -35,7 +35,7 @@ declare module 'yet-another-react-lightbox' {
     iconFullscreen?: () => React.ReactNode;
     iconExitFullscreen?: () => React.ReactNode;
   }
-  
+
   interface FullscreenProps {
     noExit?: boolean;
   }
@@ -102,11 +102,11 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Получаем токен авторизации из Redux store
   const jwt = useSelector((state: RootState) => state.user.jwt);
   const userProfile = useSelector((state: RootState) => state.user.profile);
-  
+
   // Получаем ID текущего пользователя
   const currentUserId = userProfile?.id || null;
 
@@ -117,31 +117,31 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   const [selectedColor, setSelectedColor] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<VariantColor | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState<boolean>(false);
-  
+
   // Состояние для отзывов
   const [reviews, setReviews] = useState<IReview[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
   const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [reviewsStats, setReviewsStats] = useState<{ averageRating: number; reviewCount: number; ratingDistribution?: Record<number, number> } | null>(null);
-  
+
   // Состояние для пагинации отзывов
   const [reviewsPage, setReviewsPage] = useState<number>(1);
   const [hasMoreReviews, setHasMoreReviews] = useState<boolean>(false);
   const [loadingMoreReviews, setLoadingMoreReviews] = useState<boolean>(false);
   const reviewsPerPage = 10;
-  
+
   // Состояние для сворачивания текста отзывов
   const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
-  
+
   // Состояние для формы отзыва
   const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
   const [editingReview, setEditingReview] = useState<IReview | null>(null);
   const [isReviewFormEditing, setIsReviewFormEditing] = useState<boolean>(false);
-  
+
   // Состояние для лайтбокса
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
-  
+
   // Состояние для лайтбокса отзывов
   const [reviewLightboxOpen, setReviewLightboxOpen] = useState<boolean>(false);
   const [reviewLightboxIndex, setReviewLightboxIndex] = useState<number>(0);
@@ -150,31 +150,31 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
   // Подготавливаем данные для лайтбокса
   const getLightboxItems = (): Slide[] => {
     if (!product) return [];
-    
+
     // Основные изображения товара
     const imageItems: SlideImage[] = product.images.map(image => ({
       src: `${import.meta.env.VITE_API_URL}${image.url}`,
       type: 'image' as const
     }));
-    
+
     // Основные видео товара
     const videoItems: SlideVideo[] = product.videos.map(video => ({
       sources: [{ src: `${import.meta.env.VITE_API_URL}${video.url}`, type: 'video/mp4' }],
       type: 'video' as const,
-      poster: video.thumbnail 
-        ? `${import.meta.env.VITE_API_URL}${video.thumbnail}` 
-        : product.images.length > 0 
-          ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` 
+      poster: video.thumbnail
+        ? `${import.meta.env.VITE_API_URL}${video.thumbnail}`
+        : product.images.length > 0
+          ? `${import.meta.env.VITE_API_URL}${product.images[0].url}`
           : ''
     }));
-    
+
     // Изображения из вариантов цветов
     const variantImageItems: SlideImage[] = [];
     const variantVideoItems: SlideVideo[] = [];
-    
+
     if (product.variantColors && selectedColor) {
       const selectedVariantColor = product.variantColors.find(variant => variant.id === selectedColor);
-      
+
       if (selectedVariantColor) {
         // Добавляем основное изображение варианта
         if (selectedVariantColor.image) {
@@ -183,7 +183,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
             type: 'image' as const
           });
         }
-        
+
         // Добавляем дополнительные изображения варианта
         if (selectedVariantColor.images) {
           selectedVariantColor.images.forEach(imageUrl => {
@@ -195,7 +195,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
             }
           });
         }
-        
+
         // Добавляем видео варианта
         if (selectedVariantColor.videos) {
           selectedVariantColor.videos.forEach(videoUrl => {
@@ -203,10 +203,10 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
               variantVideoItems.push({
                 sources: [{ src: `${import.meta.env.VITE_API_URL}${videoUrl}`, type: 'video/mp4' }],
                 type: 'video' as const,
-                poster: selectedVariantColor.image 
+                poster: selectedVariantColor.image
                   ? `${import.meta.env.VITE_API_URL}${selectedVariantColor.image}`
-                  : product.images.length > 0 
-                    ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` 
+                  : product.images.length > 0
+                    ? `${import.meta.env.VITE_API_URL}${product.images[0].url}`
                     : ''
               });
             }
@@ -214,7 +214,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
         }
       }
     }
-    
+
     return [...imageItems, ...variantImageItems, ...videoItems, ...variantVideoItems];
   };
 
@@ -258,7 +258,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = totalRating / reviews.length;
-    
+
     const ratingDistribution = reviews.reduce((acc, review) => {
       acc[review.rating] = (acc[review.rating] || 0) + 1;
       return acc;
@@ -279,20 +279,20 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       } else {
         setLoadingMoreReviews(true);
       }
-      
+
       const response = await axios.get<IReviewsResponse>(`${import.meta.env.VITE_API_URL}/api/products/${productId}/reviews?page=${page}&limit=${reviewsPerPage}`);
-      
+
       if (response.data && response.data.reviews) {
         if (append) {
           setReviews(prev => [...prev, ...response.data.reviews]);
         } else {
           setReviews(response.data.reviews);
         }
-        
+
         // Проверяем, есть ли еще отзывы для загрузки
         const hasMore = response.data.reviews.length === reviewsPerPage;
         setHasMoreReviews(hasMore);
-        
+
         if (response.data.stats) {
           setReviewsStats(response.data.stats);
         } else {
@@ -317,7 +317,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
   const loadMoreReviews = async () => {
     if (!product || loadingMoreReviews) return;
-    
+
     const nextPage = reviewsPage + 1;
     setReviewsPage(nextPage);
     await fetchReviews(product.id.toString(), nextPage, true);
@@ -349,7 +349,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       // Сбрасываем пагинацию и обновляем список отзывов
       setReviewsPage(1);
       await fetchReviews(product.id.toString(), 1, false);
-      
+
       // Закрываем форму
       setShowReviewForm(false);
     } catch (error) {
@@ -383,7 +383,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       // Сбрасываем пагинацию и обновляем список отзывов
       setReviewsPage(1);
       await fetchReviews(product.id.toString(), 1, false);
-      
+
       // Закрываем форму
       setShowReviewForm(false);
       setEditingReview(null);
@@ -455,22 +455,22 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const response = await axios.get<IProductDetailResponse>(`${import.meta.env.VITE_API_URL}/api/products/${id}?populate=*`);
-        
+
+        const response = await axios.get<IProductDetailResponse>(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+
         if (response.data && response.data.data) {
           setProduct(response.data.data);
-          
+
           if (response.data.data.images && response.data.data.images.length > 0) {
             setCurrentImage(`${import.meta.env.VITE_API_URL}${response.data.data.images[0].url}`);
           }
-          
+
           if (response.data.data.variantColors && response.data.data.variantColors.length > 0) {
             const firstVariant = response.data.data.variantColors[0];
             setSelectedColor(firstVariant.id);
             setSelectedVariant(firstVariant);
           }
-          
+
           await fetchReviews(id);
         }
       } catch (err) {
@@ -492,13 +492,13 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
     if (product) {
       // Создаем массивы точно так же как в getLightboxItems
       const allLightboxItems = getLightboxItems();
-      
+
       // Получаем URL текущего изображения без VITE_API_URL
       let currentMediaUrl = currentImage;
       if (currentMediaUrl.startsWith(import.meta.env.VITE_API_URL)) {
         currentMediaUrl = currentMediaUrl.replace(import.meta.env.VITE_API_URL, '');
       }
-      
+
       // Ищем индекс в массиве лайтбокса
       const index = allLightboxItems.findIndex(item => {
         if (item.type === 'image') {
@@ -510,7 +510,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
         }
         return false;
       });
-      
+
       if (index !== -1) {
         openLightbox(index);
       }
@@ -519,7 +519,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
   const handleColorSelect = (colorId: number) => {
     setSelectedColor(colorId);
-    
+
     const variant = product?.variantColors?.find(v => v.id === colorId);
     if (variant) {
       setSelectedVariant(variant);
@@ -530,22 +530,14 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
     if (!selectedVariant || !product) return;
 
     setIsAddingToCart(true);
-    
+
     try {
       dispatch(cartActions.add({
         id: product.id,
         colorId: selectedVariant.id,
         count: 1,
-        name: product.title,
-        price: selectedVariant.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : selectedVariant.price,
-        sale_price: selectedVariant.on_sale && selectedVariant.sale_price ? selectedVariant.sale_price : null,
-        image: product.images.length > 0 ? `${import.meta.env.VITE_API_URL}${product.images[0].url}` : '',
-        color: {
-          name: selectedVariant.color ? selectedVariant.color.name : '',
-          hex: selectedVariant.color ? selectedVariant.color.hex : ''
-        }
       }));
-      
+
       setTimeout(() => {
         setIsAddingToCart(false);
       }, 500);
@@ -567,9 +559,6 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
         price: 0,
         on_sale: false,
         sale_price: null,
-        images: [],
-        averageRating: null,
-        reviewCount: 0
       };
     }
 
@@ -579,9 +568,6 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       price: selectedVariant?.price ?? 0,
       on_sale: selectedVariant?.on_sale ?? false,
       sale_price: selectedVariant?.sale_price ?? null,
-      images: product.images,
-      averageRating: product.averageRating,
-      reviewCount: product.reviewCount
     };
   };
 
@@ -644,7 +630,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
         {/* Описание */}
         <ProductDescription product={product} />
-        
+
         {/* Отзывы */}
         <ProductReviews
           reviews={reviews}
@@ -686,7 +672,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
           plugins={[Video, Zoom, Thumbnails, Fullscreen]}
           video={{ autoPlay: true, controls: true }}
           zoom={{ maxZoomPixelRatio: 5, scrollToZoom: true, doubleTapDelay: 300 }}
-          carousel={{ 
+          carousel={{
             padding: '16px',
             spacing: '30px'
           }}
@@ -741,7 +727,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
         plugins={[Video, Zoom, Thumbnails, Fullscreen]}
         video={{ autoPlay: true, controls: true }}
         zoom={{ maxZoomPixelRatio: 5, scrollToZoom: true, doubleTapDelay: 300 }}
-        carousel={{ 
+        carousel={{
           padding: '16px',
           spacing: '30px'
         }}

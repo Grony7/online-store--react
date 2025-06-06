@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import styles from './IndexCatalog.module.scss';
 import { IndexCatalogProps } from './IndexCatalog.props';
-import { ICatalogCategory } from '../../interfaces/products.interface';
 import Title from '../../components/Title/Title';
+import { ICatalogCategory } from '../../interfaces/catalog.interface';
 
-interface CategoriesResponse {
-  data: ICatalogCategory[];
-}
+const API_URL = import.meta.env.VITE_API_URL
 
 const IndexCatalog = ({ ...props }: IndexCatalogProps) => {
   const [categories, setCategories] = useState<ICatalogCategory[]>([]);
@@ -19,15 +17,16 @@ const IndexCatalog = ({ ...props }: IndexCatalogProps) => {
     const fetchCategories = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        const { data } = await axios.get<CategoriesResponse>(
-          `${import.meta.env.VITE_API_URL}/api/categories`
+        const { data } = await axios.get<ICatalogCategory[]>(
+          `${API_URL}/api/categories`
         );
-        
-        setCategories(data.data);
-      } catch (err) {
-        console.error('Ошибка при загрузке категорий:', err);
+
+        setCategories(data);
+      } catch (e) {
+        const error = e as AxiosError;
+        console.error('Ошибка при загрузке категорий:', error.message);
         setError('Не удалось загрузить категории');
       } finally {
         setIsLoading(false);
@@ -79,14 +78,14 @@ const IndexCatalog = ({ ...props }: IndexCatalogProps) => {
       {categories.length > 0 ? (
         <div className={styles.grid}>
           {categories.map((category) => (
-            <Link 
-              key={category.id} 
+            <Link
+              key={category.id}
               to={`/catalog/${category.slug}`}
               className={styles.categoryCard}
             >
               <div className={styles.imageWrapper}>
                 <img
-                  src={category.image?.url ? `${import.meta.env.VITE_API_URL}${category.image.url}` : '/images/no-image.svg'}
+                  src={category.image?.url ? `${API_URL}${category.image.url}` : '/images/no-image.svg'}
                   alt={category.name}
                   className={styles.image}
                   onError={(e) => {
@@ -119,4 +118,4 @@ const IndexCatalog = ({ ...props }: IndexCatalogProps) => {
   );
 };
 
-export default IndexCatalog; 
+export default IndexCatalog;

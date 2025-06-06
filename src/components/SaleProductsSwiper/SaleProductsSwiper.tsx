@@ -2,7 +2,7 @@
 import 'swiper/css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { SaleProductsSwiperProps } from './SaleProductsSwiper.props.ts';
-import { IProduct } from '../../interfaces/products.interface.ts';
+import { IProduct } from '../../interfaces/product.interface.ts';
 import styles from './SaleProductsSwiper.module.scss';
 import axios, { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
@@ -73,4 +73,4 @@ const SaleProductsSwiper = ({ ...props }: SaleProductsSwiperProps) => {
   );
 };
 
-export default SaleProductsSwiper; 
+export default SaleProductsSwiper;

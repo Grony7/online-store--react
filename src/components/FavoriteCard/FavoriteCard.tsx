@@ -1,23 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import styles from './FavoriteCard.module.scss';
 import cn from 'classnames';
 import noImage from '../../assets/no-image.svg';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store/store';
 import { favoritesActions } from '../../store/favorites.slice';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { FavoriteCardProps } from './FavoriteCard.props.ts';
+import { Link } from 'react-router-dom';
 
-export interface FavoriteCardProps {
-  product: {
-    id: number;
-    title: string;
-    image: string;
-    inStock: boolean;
-    colorId?: number;
-  };
-  className?: string;
-}
+const API_URL = import.meta.env.VITE_API_URL
 
 const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -27,35 +20,20 @@ const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
   const handleRemoveFromFavorites = async () => {
     try {
       setIsRemoving(true);
-      
+
       // Удаляем из избранного в Redux
-      dispatch(favoritesActions.removeItem({ 
-        id: product.id, 
-        colorId: product.colorId 
+      dispatch(favoritesActions.removeItem({
+        id: product.id,
       }));
-      
+
       // Если пользователь авторизован, синхронизируем с сервером
       if (userJwt) {
-        console.log('Отправка запроса на удаление товара из избранного:', { 
-          id: product.id, 
-          colorId: product.colorId 
-        });
-        
-        // Базовый URL API
-        const baseUrl = `${import.meta.env.VITE_API_URL}/api/favorites/${product.id}`;
-        
-        // Если есть colorId, добавляем его как query-параметр
-        const url = product.colorId 
-          ? `${baseUrl}?colorId=${product.colorId}`
-          : baseUrl;
-          
-        const response = await axios.delete(url, {
+        await axios.delete(`${API_URL}/api/favorites/${product.id}`, {
           headers: { Authorization: `Bearer ${userJwt}` }
         });
-        
-        console.log('Ответ сервера на удаление из избранного:', response.data);
       }
-    } catch (error) {
+    } catch (e) {
+      const error = e as AxiosError;
       console.error('Ошибка при удалении из избранного:', error);
     } finally {
       setIsRemoving(false);
@@ -85,7 +63,7 @@ const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
 
       <Link to={`/products/${product.id}`} className={styles.imageWrapper}>
         <img
-          src={product.image ? import.meta.env.VITE_API_URL + product.image : noImage}
+          src={product.image ? API_URL + product.image : noImage}
           alt={product.title}
           className={styles.image}
           onError={(e) => {
@@ -115,4 +93,4 @@ const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
   );
 };
 
-export default FavoriteCard; 
+export default FavoriteCard;
