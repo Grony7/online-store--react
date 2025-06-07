@@ -1,0 +1,19 @@
+FROM node:22.12.0-bullseye-slim AS builder
+WORKDIR /app
+
+# ставим yarn v1
+RUN npm install -g yarn@1.22.19
+
+# копируем манифесты и устанавливаем только прод-зависимости без опциональных
+COPY package.json yarn.lock ./
+RUN yarn install --production --no-optional
+
+# копируем код и собираем
+COPY . .
+RUN yarn build
+
+# финальный nginx-образ
+FROM nginx:stable-alpine
+COPY --from=builder /app/dist /usr/share/nginx/html:ro
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
