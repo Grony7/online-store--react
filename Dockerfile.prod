@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare yarn@1.22.19 --activate
 
 # Копируем манифесты и ставим только production-зависимости без опциональных
 COPY package.json yarn.lock ./
-RUN yarn install --production --no-optional
+RUN yarn install --frozen-lockfile --no-optional
 
 # Копируем весь исходный код и собираем
 COPY . .
