@@ -8,6 +8,7 @@ export interface IProduct {
   image?: string;
   inStock?: boolean;
   variantColorIds?: number[];
+  colorId?: number;
 }
 
 export interface IProductDetail {

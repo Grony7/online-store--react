@@ -1,8 +1,7 @@
 import React, {
   useState,
   useEffect,
-  ChangeEvent,
-  FormEvent
+  ChangeEvent
 } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -14,16 +13,8 @@ import {
   Placemark
 } from '@pbe/react-yandex-maps';
 import styles from './Checkout.module.scss';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { CartItemFull } from '../../interfaces/cart.interface';
-
-// Добавляем интерфейс для ответа API
-interface OrderApiResponse {
-  data: {
-    payment_url: string;
-    order_id: number;
-  }
-}
 
 interface FormState {
   name: string;
@@ -74,7 +65,8 @@ const Checkout: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
 
-  // Добавляем состояние для отображения ошибки заказа
+  // Состояния для обработки отправки формы
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
   // Загружаем детали товаров в корзине
@@ -182,83 +174,71 @@ const Checkout: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOrderError(null); // Сбрасываем ошибку при каждой отправке
     
-    if (!validate()) return;
-
-    // Получаем только выбранные товары
-    const selectedCartItems = cartItems.filter(item => item.selected);
-    
-    if (selectedCartItems.length === 0) {
-      setOrderError('В корзине нет выбранных товаров');
+    // Валидация формы
+    if (!validate()) {
       return;
     }
 
-    // Собираем тело заказа
-    const orderPayload = {
-      pickup_point_id: addressId!,
-      delivery_method: 'pickup',
-      customer_name: form.name,
-      phone: form.phone,
-      payment_method: 'online',
-      items: selectedCartItems.map((it) => ({
-        variant_id: it.colorId,
-        quantity: it.count
-      }))
-    };
+    setIsSubmitting(true);
+    setOrderError(null);
 
     try {
-      console.log('Отправка заказа:', orderPayload);
+      const orderPayload = {
+        data: {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          pickup_point_id: addressId,
+          cart: itemsWithDetails.map(item => ({
+            product_id: item.id,
+            color_id: item.colorId,
+            quantity: item.count
+          }))
+        }
+      };
       
-      const { data } = await axios.post<OrderApiResponse>(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/orders`,
         orderPayload,
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${jwt}`
+            'Authorization': `Bearer ${jwt}`
           }
         }
       );
 
-      console.log('Ответ сервера:', data.data);
+      const { data } = response;
 
-      // Очищаем корзину после успешного создания заказа
-      dispatch(cartActions.clear());
+      if (response.status === 201 && data.success) {
+        dispatch(cartActions.clear());
 
-      // Сохраняем информацию о том, что мы переходим с checkout
-      sessionStorage.setItem('payment_access', 'true');
-      
-      // Проверяем, что URL начинается с "/", если да - используем как есть, иначе - считаем его полным URL
-      if (data.data.payment_url && data.data.payment_url.startsWith('/')) {
-        // Удаляем начальный слеш, чтобы избежать двойного слеша
-        const paymentUrl = data.data.payment_url.substring(1);
-        console.log('Формируем URL для внутренней навигации:', `/payment/${paymentUrl}`);
-        window.location.href = `/payment/${paymentUrl}`;
-      } else if (data.data.payment_url && data.data.payment_url.startsWith('http')) {
-        // Если это полный URL, используем window.location
-        console.log('Перенаправление на внешний URL:', data.data.payment_url);
-        window.location.href = data.data.payment_url;
+        if (data.data && data.data.payment_url) {
+          const paymentUrl = data.data.payment_url;
+          
+          if (paymentUrl.startsWith('http://') || paymentUrl.startsWith('https://')) {
+            window.location.href = data.data.payment_url;
+          } else {
+            navigate(`/payment/${data.data.order_id}`);
+          }
+        } else {
+          navigate('/orders');
+        }
       } else {
-        // Если это ID или что-то иное - переходим на страницу оплаты с ID
-        console.log('Перенаправление на страницу оплаты с order_id:', data.data.order_id);
-        window.location.href = `/payment/${data.data.order_id}`;
+        throw new Error(data.message || 'Неизвестная ошибка при создании заказа');
       }
-
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-      const errorMessage = 
-        typeof error.response?.data === 'object' && error.response?.data && 'message' in error.response.data
-          ? (error.response.data as { message: string }).message
-          : 'Ошибка оформления заказа';
+    } catch (error: unknown) {
+      console.error('Ошибка при оформлении заказа:', error);
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : 'Произошла ошибка при оформлении заказа. Попробуйте снова.';
       
-      console.error(
-        'Ошибка оформления заказа:',
-        error.response?.data || error
-      );
       setOrderError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -286,120 +266,120 @@ const Checkout: React.FC = () => {
       ) : loadError ? (
         <div className={styles.error}>{loadError}</div>
       ) : (
-      <form
-        className={styles.form}
-        onSubmit={handleSubmit}
-        noValidate
-      >
-        {/* Самовывоз */}
-        <section className={styles.pickupSection}>
-          <h2 className={styles.sectionTitle}>Самовывоз</h2>
-          <div className={styles.fieldGroup}>
-            <label
-              htmlFor="address"
-              className={styles.label}
-            >
-              Адрес пункта выдачи
-            </label>
-            <div
-              className={`${styles.inputWrapper} ${
-                errors.address ? styles.error : ''
-              }`}
-            >
-              <input
-                id="address"
-                type="text"
-                readOnly
-                value={addressString}
-                placeholder="Выберите адрес"
-                className={styles.input}
-                onClick={() => setModalOpen(true)}
-              />
-              <button
-                type="button"
-                className={styles.editBtn}
-                aria-label="Выбрать адрес"
-                onClick={() => setModalOpen(true)}
+        <form
+          className={styles.form}
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          {/* Самовывоз */}
+          <section className={styles.pickupSection}>
+            <h2 className={styles.sectionTitle}>Самовывоз</h2>
+            <div className={styles.fieldGroup}>
+              <label
+                htmlFor="address"
+                className={styles.label}
               >
-                +
-              </button>
-            </div>
-            {errors.address && (
-              <span className={styles.errorMsg}>
-                {errors.address}
-              </span>
-            )}
-          </div>
-        </section>
-
-        {/* Контакты */}
-        <section className={styles.contactsSection}>
-          <h2 className={styles.sectionTitle}>
-            Контактные данные
-          </h2>
-
-          {/* Имя */}
-          <div className={styles.fieldGroup}>
-            <label
-              htmlFor="name"
-              className={styles.label}
-            >
-              Имя
-            </label>
-            <div
-              className={`${styles.inputWrapper} ${
-                errors.name ? styles.error : ''
-              }`}
-            >
-              <input
-                id="name"
-                type="text"
-                value={form.name}
-                onChange={handleChange('name')}
-                className={styles.input}
-              />
-              {!errors.name && form.name && (
-                <span className={styles.validIcon}>✔</span>
+                Адрес пункта выдачи
+              </label>
+              <div
+                className={`${styles.inputWrapper} ${
+                  errors.address ? styles.error : ''
+                }`}
+              >
+                <input
+                  id="address"
+                  type="text"
+                  readOnly
+                  value={addressString}
+                  placeholder="Выберите адрес"
+                  className={styles.input}
+                  onClick={() => setModalOpen(true)}
+                />
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  aria-label="Выбрать адрес"
+                  onClick={() => setModalOpen(true)}
+                >
+                  +
+                </button>
+              </div>
+              {errors.address && (
+                <span className={styles.errorMsg}>
+                  {errors.address}
+                </span>
               )}
             </div>
-            {errors.name && (
-              <span className={styles.errorMsg}>
-                {errors.name}
-              </span>
-            )}
-          </div>
+          </section>
 
-          {/* Телефон */}
-          <div className={styles.fieldGroup}>
-            <label
-              htmlFor="phone"
-              className={styles.label}
-            >
-              Телефон
-            </label>
-            <div
-              className={`${styles.inputWrapper} ${
-                errors.phone ? styles.error : ''
-              }`}
-            >
-              <input
-                id="phone"
-                type="tel"
-                placeholder="+7XXXXXXXXXX"
-                value={form.phone}
-                onChange={handleChange('phone')}
-                className={styles.input}
-              />
+          {/* Контакты */}
+          <section className={styles.contactsSection}>
+            <h2 className={styles.sectionTitle}>
+              Контактные данные
+            </h2>
+
+            {/* Имя */}
+            <div className={styles.fieldGroup}>
+              <label
+                htmlFor="name"
+                className={styles.label}
+              >
+                Имя
+              </label>
+              <div
+                className={`${styles.inputWrapper} ${
+                  errors.name ? styles.error : ''
+                }`}
+              >
+                <input
+                  id="name"
+                  type="text"
+                  value={form.name}
+                  onChange={handleChange('name')}
+                  className={styles.input}
+                />
+                {!errors.name && form.name && (
+                  <span className={styles.validIcon}>✔</span>
+                )}
+              </div>
+              {errors.name && (
+                <span className={styles.errorMsg}>
+                  {errors.name}
+                </span>
+              )}
+            </div>
+
+            {/* Телефон */}
+            <div className={styles.fieldGroup}>
+              <label
+                htmlFor="phone"
+                className={styles.label}
+              >
+                Телефон
+              </label>
+              <div
+                className={`${styles.inputWrapper} ${
+                  errors.phone ? styles.error : ''
+                }`}
+              >
+                <input
+                  id="phone"
+                  type="tel"
+                  placeholder="+7XXXXXXXXXX"
+                  value={form.phone}
+                  onChange={handleChange('phone')}
+                  className={styles.input}
+                />
+                {errors.phone && (
+                  <span className={styles.errorIcon}>!</span>
+                )}
+              </div>
               {errors.phone && (
-                <span className={styles.errorIcon}>!</span>
+                <span className={styles.errorMsg}>
+                  {errors.phone}
+                </span>
               )}
             </div>
-            {errors.phone && (
-              <span className={styles.errorMsg}>
-                {errors.phone}
-              </span>
-            )}
-          </div>
           </section>
           
           {/* Информация о заказе */}
@@ -438,29 +418,30 @@ const Checkout: React.FC = () => {
                 Нет выбранных товаров в корзине
               </div>
             )}
-        </section>
+          </section>
 
-        {/* Футер */}
-        <div className={styles.footerBar}>
+          {/* Футер */}
+          <div className={styles.footerBar}>
             {orderError && (
               <div className={styles.orderError}>
                 {orderError}
               </div>
             )}
-          <div className={styles.total}>
-            Итого:{' '}
-            <span className={styles.amount}>
+            <div className={styles.total}>
+              Итого:{' '}
+              <span className={styles.amount}>
                 {totalPrice.toLocaleString()} ₽
-            </span>
+              </span>
+            </div>
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              disabled={isSubmitting || itemsWithDetails.length === 0}
+            >
+              {isSubmitting ? 'Обрабатывается...' : 'Оплатить'}
+            </button>
           </div>
-          <button
-            type="submit"
-            className={styles.submitBtn}
-          >
-            Оплатить
-          </button>
-        </div>
-      </form>
+        </form>
       )}
 
       {/* Модалка с картой */}

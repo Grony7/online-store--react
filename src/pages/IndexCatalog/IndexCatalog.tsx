@@ -6,7 +6,7 @@ import { IndexCatalogProps } from './IndexCatalog.props';
 import Title from '../../components/Title/Title';
 import { ICatalogCategory } from '../../interfaces/catalog.interface';
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL;
 
 const IndexCatalog = ({ ...props }: IndexCatalogProps) => {
   const [categories, setCategories] = useState<ICatalogCategory[]>([]);

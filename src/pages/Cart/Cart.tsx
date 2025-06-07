@@ -19,14 +19,14 @@ const getItemsCountText = (count: number): string => {
   }
 
   switch (lastDigit) {
-    case 1:
-      return 'товар';
-    case 2:
-    case 3:
-    case 4:
-      return 'товара';
-    default:
-      return 'товаров';
+  case 1:
+    return 'товар';
+  case 2:
+  case 3:
+  case 4:
+    return 'товара';
+  default:
+    return 'товаров';
   }
 };
 
@@ -39,32 +39,21 @@ export const Cart  = ({ className, ...props }: CartProps) => {
 
   // Загружаем данные о товарах
   useEffect(() => {
+    if (cartItems.length === 0) {
+      setItems([]);
+      return;
+    }
+
     const loadItemsData = async () => {
-      if (cartItems.length === 0) {
-        setItems([]);
-        return;
-      }
-
-      console.log('Загрузка данных товаров корзины:', cartItems);
-
-      // Подготавливаем начальное состояние с loading
-      const initialItems: CartItemFull[] = cartItems.map(item => ({
-        id: item.id,
-        colorId: item.colorId,
-        count: item.count,
-        selected: item.selected !== undefined ? item.selected : true,
-        isLoading: true,
-        isError: false
-      }));
-      setItems(initialItems);
-
-      // Создаем запросы для всех товаров
       const requests = cartItems.map(async (item): Promise<CartItemFull> => {
         try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+          const url = item.colorId 
+            ? `${baseUrl}/api/products/brief/${item.id}?colorId=${item.colorId}`
+            : `${baseUrl}/api/products/brief/${item.id}`;
 
-          const url = `${import.meta.env.VITE_API_URL}/api/products/brief/${item.id}?colorId=${item.colorId}`;
-          const {data} = await axios.get(url);
-          console.log('Ответ для товара', item.id, ':', data);
+          const response = await axios.get(url);
+          const { data } = response;
 
           return {
             id: item.id,
@@ -75,7 +64,7 @@ export const Cart  = ({ className, ...props }: CartProps) => {
               id: data.id,
               title: data.title,
               price: data.price,
-              sale_price: data.sale_price || data.price,
+              sale_price: data.sale_price,
               on_sale: data.on_sale || false,
               image: data.image,
               quantity: data.quantity,
@@ -84,7 +73,7 @@ export const Cart  = ({ className, ...props }: CartProps) => {
             isLoading: false,
             isError: false
           };
-        } catch (error) {
+        } catch {
           return {
             id: item.id,
             colorId: item.colorId,
@@ -98,7 +87,6 @@ export const Cart  = ({ className, ...props }: CartProps) => {
 
       try {
         const results = await Promise.all(requests);
-        console.log('Результаты загрузки товаров корзины:', results);
         setItems(results);
       } catch (error) {
         console.error('Ошибка при загрузке товаров корзины:', error);

@@ -35,7 +35,7 @@ const FilterPanel = ({
       setFilters(filtersFromApi);
 
       const initialValues: Record<string, string[] | number[]> = {
-        priceRange: [filtersFromApi.priceRange.min, filtersFromApi.priceRange.max],
+        priceRange: [filtersFromApi.priceRange.min, filtersFromApi.priceRange.max]
       };
 
       filtersFromApi.specifications.forEach((spec) => {
@@ -153,13 +153,13 @@ const FilterPanel = ({
     });
   };
 
-  const handleApply = () => {
-    console.log('Selected filters before apply:', selected);
-    onApply(selected);
-    if (onVisibilityChange) {
-      onVisibilityChange(false);
-    }
-  };
+  // const handleApply = () => {
+  //   console.log('Selected filters before apply:', selected);
+  //   onApply(selected);
+  //   if (onVisibilityChange) {
+  //     onVisibilityChange(false);
+  //   }
+  // };
 
   const getFilterValue = (slug: string): string[] => {
     const values = (selected[slug] as string[]) || [];
@@ -172,6 +172,13 @@ const FilterPanel = ({
     setSelected(prev => ({ ...prev, priceRange: newValues }));
     setMinPriceInput(newValues[0].toString());
     setMaxPriceInput(newValues[1].toString());
+  };
+
+  const handleApplyFilters = () => {
+    onApply(selected);
+    if (onVisibilityChange) {
+      onVisibilityChange(false);
+    }
   };
 
   return (
@@ -271,7 +278,7 @@ const FilterPanel = ({
         </button>
         <button
           className={styles.applyButton}
-          onClick={handleApply}
+          onClick={handleApplyFilters}
         >
           Применить
         </button>

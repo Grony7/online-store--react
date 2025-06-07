@@ -1,17 +1,21 @@
 export const loadState = <T>(key: string): T | undefined => {
   try {
-    const jsonState = localStorage.getItem(key);
-    if (!jsonState) {
+    const json = localStorage.getItem(key);
+    if (json === null) {
       return undefined;
     }
-    return JSON.parse(jsonState);
+    return JSON.parse(json);
   } catch (e) {
-    console.log(e);
+    console.error('Ошибка загрузки состояния:', e);
     return undefined;
   }
 };
 
 export const saveState = <T>(state: T, key: string) => {
-  const stringState = JSON.stringify(state);
-  localStorage.setItem(key, stringState);
+  try {
+    const stateToSave = JSON.stringify(state);
+    localStorage.setItem(key, stateToSave);
+  } catch (e) {
+    console.error('Ошибка сохранения состояния:', e);
+  }
 };

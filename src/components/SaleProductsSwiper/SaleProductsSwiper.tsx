@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-expect-error - Swiper CSS imports don't have TypeScript declarations
 import 'swiper/css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { SaleProductsSwiperProps } from './SaleProductsSwiper.props.ts';

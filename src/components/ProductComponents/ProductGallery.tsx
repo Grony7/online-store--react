@@ -60,7 +60,7 @@ const ProductGallery: FC<ProductGalleryProps> = ({
   useEffect(() => {
     const loadThumbnails = async () => {
       const thumbnailsMap = new Map<string, string>();
-      
+        
       // Обрабатываем основные видео товара
       if (product.videos && product.videos.length > 0) {
         for (const video of product.videos) {
@@ -86,10 +86,10 @@ const ProductGallery: FC<ProductGalleryProps> = ({
           }
         }
       }
-      
+        
       setVideoThumbnails(thumbnailsMap);
     };
-    
+      
     if ((product.videos && product.videos.length > 0) || 
         (product.variantColors && product.variantColors.some(v => v.videos && v.videos.length > 0))) {
       loadThumbnails();

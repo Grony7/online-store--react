@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import cn from 'classnames';
 import { IReview } from '../../interfaces/reviews.interface';
 import styles from './ReviewsStats.module.scss';

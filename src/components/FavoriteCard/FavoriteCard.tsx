@@ -10,7 +10,7 @@ import axios, { AxiosError } from 'axios';
 import { FavoriteCardProps } from './FavoriteCard.props.ts';
 import { Link } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL;
 
 const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +23,7 @@ const FavoriteCard = ({ className, product, ...props }: FavoriteCardProps) => {
 
       // Удаляем из избранного в Redux
       dispatch(favoritesActions.removeItem({
-        id: product.id,
+        id: product.id
       }));
 
       // Если пользователь авторизован, синхронизируем с сервером

@@ -1,6 +1,8 @@
-// @ts-expect-error - Swiper использует CSS импорты
+// @ts-expect-error - Swiper CSS imports don't have TypeScript declarations
 import 'swiper/css';
+// @ts-expect-error - Swiper CSS imports don't have TypeScript declarations
 import 'swiper/css/pagination';
+// @ts-expect-error - Swiper CSS imports don't have TypeScript declarations
 import 'swiper/css/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
@@ -73,10 +75,10 @@ const PromotionsSwiper = ({ ...props }: PromotionsSwiperProps) => {
         loop={promotions.length > 1}
         autoplay={{
           delay: 5000,
-          disableOnInteraction: false,
+          disableOnInteraction: false
         }}
         pagination={{
-          clickable: true,
+          clickable: true
         }}
         navigation={true}
         modules={[Autoplay, Pagination, Navigation]}

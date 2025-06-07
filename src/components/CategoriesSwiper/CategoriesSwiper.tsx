@@ -1,9 +1,9 @@
-// @ts-expect-error
+// @ts-expect-error - Swiper CSS imports don't have TypeScript declarations
 import 'swiper/css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { CategoriesSwiperProps } from './CategoriesSwiper.props.ts';
 import CategoriesSwiperItem from './CategoriesSwiperItem/CategoriesSwiperItem.tsx';
-import styles from './CategoriesSwiper.module.scss'
+import styles from './CategoriesSwiper.module.scss';
 import axios, { AxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import Title from '../Title/Title.tsx';
@@ -14,13 +14,13 @@ const CategoriesSwiper = ({ ...props }: CategoriesSwiperProps) => {
 
   const getCatalogTypes = async () => {
     try {
-      const { data } = await axios.get<ICatalogCategory[]>(`${import.meta.env.VITE_API_URL}/api/categories`)
-      setCatalogTypes(data)
+      const { data } = await axios.get<ICatalogCategory[]>(`${import.meta.env.VITE_API_URL}/api/categories`);
+      setCatalogTypes(data);
     } catch (e) {
       const error = e as AxiosError;
-      console.log(error.message)
+      console.log(error.message);
     }
-  }
+  };
 
   useEffect(() => {
     getCatalogTypes();

@@ -535,7 +535,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       dispatch(cartActions.add({
         id: product.id,
         colorId: selectedVariant.id,
-        count: 1,
+        count: 1
       }));
 
       setTimeout(() => {
@@ -558,7 +558,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
         title: '',
         price: 0,
         on_sale: false,
-        sale_price: null,
+        sale_price: null
       };
     }
 
@@ -567,7 +567,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
       title: product.title,
       price: selectedVariant?.price ?? 0,
       on_sale: selectedVariant?.on_sale ?? false,
-      sale_price: selectedVariant?.sale_price ?? null,
+      sale_price: selectedVariant?.sale_price ?? null
     };
   };
 
@@ -654,7 +654,6 @@ const ProductDetail: FC<ProductDetailProps> = ({ className, ...props }) => {
 
       {/* Форма отзыва */}
       <ReviewForm
-        productId={product.id}
         existingReview={editingReview}
         isEditing={isReviewFormEditing}
         isVisible={showReviewForm}

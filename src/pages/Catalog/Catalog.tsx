@@ -117,7 +117,6 @@ const Catalog = ({ ...props }: CatalogProps) => {
   };
 
   const handleFilterApply = (selectedFilters: Record<string, string[] | number[]>) => {
-    console.log('Applied filters:', selectedFilters);
     setActiveFilters(selectedFilters);
     setCurrentPage(1); // Сбрасываем на первую страницу при применении фильтров
 

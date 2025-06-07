@@ -4,7 +4,6 @@ import { IReview } from '../../interfaces/reviews.interface';
 import styles from './ReviewForm.module.scss';
 
 interface ReviewFormProps {
-  productId: number;
   existingReview?: IReview | null;
   isEditing?: boolean;
   isVisible: boolean;
@@ -20,7 +19,6 @@ export interface ReviewFormData {
 }
 
 const ReviewForm: FC<ReviewFormProps> = ({
-  productId, // eslint-disable-line @typescript-eslint/no-unused-vars
   existingReview,
   isEditing = false,
   isVisible,
@@ -256,25 +254,21 @@ const ReviewForm: FC<ReviewFormProps> = ({
                       file.name.toLowerCase().endsWith(ext)
                     );
                   
+                  const fileUrl = URL.createObjectURL(file);
+                  
                   return (
                     <div key={`${file.name}-${file.size}-${index}`} className={styles.mediaItem}>
                       {isImageFile ? (
-                        <img 
-                          src={URL.createObjectURL(file)} 
-                          alt="Предпросмотр"
-                          className={styles.previewImage}
-                          onLoad={() => console.log('Image loaded:', file.name)}
-                          onError={(e) => console.error('Image load error:', file.name, e)}
+                        <img
+                          src={fileUrl}
+                          alt={`Предпросмотр ${file.name}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : isVideoFile ? (
-                        <video 
-                          src={URL.createObjectURL(file)}
-                          className={styles.previewVideo}
-                          muted
-                          controls={false}
-                          preload="metadata"
-                          onLoadedData={() => console.log('Video loaded:', file.name)}
-                          onError={(e) => console.error('Video load error:', file.name, e)}
+                        <video
+                          src={fileUrl}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          controls
                         />
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '12px' }}>

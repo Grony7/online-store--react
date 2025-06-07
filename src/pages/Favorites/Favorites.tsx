@@ -37,37 +37,21 @@ const Favorites = () => {
   const [isServerLoading, setIsServerLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Загружаем данные о товарах
   useEffect(() => {
+    if (favoriteItems.length === 0) {
+      setItems([]);
+      return;
+    }
+
     const loadItemsData = async () => {
-      if (favoriteItems.length === 0) {
-        setItems([]);
-        return;
-      }
-
-      console.log('Загрузка данных избранных товаров:', favoriteItems);
-
-      // Подготавливаем начальное состояние с loading
-      const initialItems: FavoriteItemData[] = favoriteItems.map(item => ({
-        id: item.id,
-        colorId: item.colorId,
-        isLoading: true,
-        isError: false
-      }));
-      setItems(initialItems);
-
-      // Создаем запросы для всех товаров
       const requests = favoriteItems.map(async (item): Promise<FavoriteItemData> => {
         try {
-          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+          const baseUrl = import.meta.env.VITE_API_URL;
           const url = item.colorId 
             ? `${baseUrl}/api/products/brief/${item.id}?colorId=${item.colorId}`
             : `${baseUrl}/api/products/brief/${item.id}`;
           
-          console.log('Запрос избранного товара:', { id: item.id, colorId: item.colorId, url });
-          
           const response = await axios.get(url);
-          console.log('Ответ для избранного товара', item.id, ':', response.data);
           
           return {
             id: item.id,
@@ -81,7 +65,6 @@ const Favorites = () => {
               image: response.data.image,
               quantity: response.data.quantity,
               color: response.data.color,
-              // Расчетные поля для обратной совместимости
               inStock: response.data.quantity > 0,
               discount_percent: response.data.sale_price && response.data.price > response.data.sale_price 
                 ? Math.round(((response.data.price - response.data.sale_price) / response.data.price) * 100)
@@ -102,7 +85,6 @@ const Favorites = () => {
 
       try {
         const results = await Promise.all(requests);
-        console.log('Результаты загрузки избранных товаров:', results);
         setItems(results);
       } catch (error) {
         console.error('Ошибка при загрузке избранных товаров:', error);
@@ -112,7 +94,6 @@ const Favorites = () => {
     loadItemsData();
   }, [favoriteItems]);
 
-  // Если пользователь авторизован, синхронизируем избранные товары с сервером
   useEffect(() => {
     const syncWithServer = async () => {
       if (!userJwt) return;
@@ -121,14 +102,10 @@ const Favorites = () => {
       setServerError(null);
       
       try {
-        // Получаем список избранных товаров с сервера
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/favorites`, {
           headers: { Authorization: `Bearer ${userJwt}` }
         });
         
-        console.log('Ответ API на запрос избранных товаров:', response.data);
-        
-        // Извлекаем ID товаров из ответа сервера
         let favoriteIds: Array<{id: number, colorId?: number}> = [];
         
         if (Array.isArray(response.data)) {
@@ -143,15 +120,13 @@ const Favorites = () => {
           }));
         }
         
-        console.log('Извлеченные ID избранных товаров:', favoriteIds);
-        
-        // Обновляем состояние Redux только ID-шниками
+      
+        // Только обновляем избранные товары, если с сервера пришли данные
+        // Не очищаем локальные данные если сервер вернул пустой список
         if (favoriteIds.length > 0) {
           dispatch(favoritesActions.setItems(favoriteIds));
-        } else {
-          console.log('Список избранных товаров пуст');
-          dispatch(favoritesActions.clear());
         }
+        // Не делаем clear() - оставляем локальные данные
       } catch (error) {
         console.error('Ошибка при синхронизации избранных товаров:', error);
         setServerError('Не удалось синхронизировать с сервером. Показываем локальные данные.');
@@ -163,21 +138,11 @@ const Favorites = () => {
     syncWithServer();
   }, [userJwt, dispatch]);
 
-  // Проверяем общее состояние загрузки
   const isAnyItemLoading = items.some(item => item.isLoading);
   const itemsWithDetails = items.filter(item => item.details);
   const hasErrors = items.some(item => item.isError);
 
-  console.log('Состояние избранных:', {
-    totalItems: items.length,
-    itemsWithDetails: itemsWithDetails.length,
-    loading: isAnyItemLoading,
-    serverLoading: isServerLoading,
-    hasErrors
-  });
-
   const handleRetryLoad = () => {
-    // Перезапускаем загрузку данных
     const loadItemsData = async () => {
       const requests = favoriteItems.map(async (item): Promise<FavoriteItemData> => {
         try {
@@ -269,6 +234,7 @@ const Favorites = () => {
                 product={{
                   id: favorite.details.id,
                   title: favorite.details.title,
+                  price: favorite.details.price,
                   image: favorite.details.image,
                   inStock: favorite.details.inStock || false,
                   colorId: favorite.colorId
