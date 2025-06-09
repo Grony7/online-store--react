@@ -1,5 +1,5 @@
 # Дипломка
-Всё кщк в стадии разработке, пока еле живое 
+Всё ещё в стадии разработки, пока еле живое 
 
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
